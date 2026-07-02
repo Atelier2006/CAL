@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャリアセンター管理画面 - お知らせ管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="common.css">
+    <style>
+        /* ページタイトル */
+        .page-title h1 {
+            font-size: 20px;
+            margin: 0 0 4px 0;
+            font-weight: bold;
+        }
+
+        .page-title p {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* 共通カードレイアウト */
+        .card-layout {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        /* 共通テーブルスタイル */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .admin-table th {
+            font-weight: 600;
+            padding: 12px;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid #edf2f7;
+            vertical-align: middle;
+        }
+
+        /* ページネーション共通ボタン */
+        .pagination {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pagination button {
+            background: white;
+            border: 1px solid #e5e7eb;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #4b5563;
+        }
+
+        .pagination .active-page {
+            width: 28px;
+            height: 28px;
+            background-color: #005bac;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* 状態バッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap; /* 改行を防ぐ */
+        }
+
+        .status-success { background-color: #d1fae5; color: #065f46; }
+        .status-warning { background-color: #fef3c7; color: #92400e; }
+        .status-danger { background-color: #f3f4f6; color: #1f2937; }
+
+        /* セカンダリボタン */
+        .btn-secondary {
+            background-color: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f9fafb;
+        }
+
+        /* ==========================================
+           4. お知らせ管理画面 固有スタイル
+           ========================================== */
+
+        /* 4カラムの統計グリッド */
+        .notice-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stats-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+        }
+
+        .stats-card .icon-circle {
+            width: 44px;
+            height: 44px;
+            border: 2px solid;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .stats-card .label {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 0 0 4px 0;
+        }
+
+        .stats-card .number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .stats-card .unit {
+            font-size: 12px;
+            margin-left: 2px;
+            font-weight: normal;
+            color: #4b5563;
+        }
+
+        /* 検索・フィルターバー */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            flex-wrap: wrap;
+        }
+
+        .form-control {
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #374151;
+            background-color: #fff;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .search-input-wrapper .form-control {
+            width: 100%;
+            padding-left: 32px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .date-input-wrapper {
+            position: relative;
+            width: 150px;
+        }
+
+        .date-input-wrapper .form-control {
+            width: 100%;
+            padding-right: 32px;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .date-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        select.form-control {
+            width: 140px;
+            cursor: pointer;
+            color: #4b5563;
+        }
+
+        /* 各種ボタンの拡張 */
+        .flex-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 36px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background-color: #005bac;
+            color: white;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 0 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e73be;
+        }
+
+        .btn-sm {
+            padding: 2px 10px !important;
+            font-size: 11px !important;
+            height: 24px;
+            white-space: nowrap; /* ボタン内の文字の改行を防ぐ */
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 14px;
+        }
+
+        .btn-icon:hover {
+            color: #1f2937;
+        }
+
+        /* 下段レイアウトグリッド (比率を 2fr 1fr から 73% 27% に微調整) */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 73% 27%;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* テーブル内の固有設定 */
+        .notice-table th {
+            background-color: #f8fafc;
+            color: #4b5563;
+        }
+
+        .notice-table td {
+            padding: 14px 12px;
+        }
+
+        .id-cell {
+            color: #6b7280;
+            font-family: monospace;
+        }
+
+        .title-cell {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .action-cells {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* フッター（ページネーション + ページ情報） */
+        .table-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 16px;
+            position: relative;
+        }
+
+        .table-info {
+            position: absolute;
+            right: 0;
+            font-size: 12px;
+            color: #4b5563;
+        }
+
+        /* カテゴリタグ定義 */
+        .notice-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .tag-important {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+
+        .tag-other {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .tag-event {
+            background-color: #f3e8ff;
+            color: #a855f7;
+        }
+
+        /* 右側詳細プレビューカード */
+        .preview-card {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 0 0 12px 0;
+        }
+
+        .preview-divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 0 0 16px 0;
+        }
+
+        .preview-meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .preview-meta-table th,
+        .preview-meta-table td {
+            padding: 8px 0;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .preview-meta-table th {
+            color: #6b7280;
+            width: 40%;
+            font-weight: normal;
+        }
+
+        .preview-meta-table td {
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        /* 内側水色プレビューエリア */
+        .preview-content-box {
+            background-color: #f0f7ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .content-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .content-icon-circle {
+            width: 32px;
+            height: 32px;
+            background-color: #fff;
+            border: 1px solid #bfdbfe;
+            color: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .content-header h4 {
+            font-size: 13px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .inner-divider {
+            border: none;
+            border-top: 1px solid #bfdbfe;
+            margin: 0 0 12px 0;
+        }
+
+        .content-body {
+            font-size: 12px;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* アクションボタン群 */
+        .preview-actions {
+            display: flex;
+            flex-direction: column; /* 横並びだと狭いので縦並びに変更 */
+            gap: 8px;
+        }
+
+        .preview-actions button {
+            width: 100%;
+            height: 36px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .btn-action-blue {
+            background-color: #005bac;
+            color: white;
+            border: 1px solid transparent;
+        }
+
+        .btn-action-blue:hover {
+            background-color: #1e73be;
+        }
+
+        .btn-action-orange {
+            background-color: #f97316;
+            color: white;
+            border: 1px solid transparent;
+        }
+
+        .btn-action-orange:hover {
+            background-color: #ea580c;
+        }
+
+        .btn-action-outline {
+            background-color: white;
+            color: #005bac;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-action-outline:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-hotel"></i>
+            <span>お知らせ管理画面</span>
+        </div>
+        <div class="user-menu">
+            <div class="avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <span>管理者</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </header>
+
+    <div class="app-container">
+
+        <aside>
+            <nav>
+                <a href="dashboard.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="reservation.html">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>予約画面</span>
+                </a>
+                <!-- <a href="student.html">
+                    <i class="fa-solid fa-users"></i>
+                    <span>学生管理</span>
+                </a> -->
+                <a href="notice.html" class="active">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>お知らせ管理</span>
+                </a>
+                <a href="staff.html">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>相談員管理</span>
+                </a>
+                <!-- <a href="report.html">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>レポート</span>
+                </a> -->
+                <a href="setting.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main>
+            <div class="page-title">
+                <h1>お知らせ管理</h1>
+                <p>お知らせ情報の検索・確認・管理ができます</p>
+            </div>
+
+            <div class="notice-stats-grid">
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #bfdbfe; color: #3b82f6;">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">公開中のお知らせ</p>
+                        <p class="number" style="color: #2563eb;">3<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #fca5a5; color: #ef4444;">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label" style="color: #ef4444;">重要</p>
+                        <p class="number" style="color: #dc2626;">1<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #93c5fd; color: #1e73be;">
+                        <i class="fa-solid fa-pen"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">下書き</p>
+                        <p class="number" style="color: #1e73be;">1<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #d1d5db; color: #9ca3af;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">終了済み</p>
+                        <p class="number" style="color: #9ca3af;">1<span class="unit">件</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-layout filter-bar">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" placeholder="タイトル・内容で検索" class="form-control">
+                </div>
+                <select class="form-control">
+                    <option>すべてのカテゴリ</option>
+                    <option>重要</option>
+                    <option>イベント</option>
+                    <option>その他</option>
+                </select>
+                <select class="form-control">
+                    <option>すべての状態</option>
+                    <option>公開中</option>
+                    <option>下書き</option>
+                    <option>終了</option>
+                </select>
+                <div class="date-input-wrapper">
+                    <input type="text" placeholder="公開日を選択" class="form-control" onfocus="(this.type='date')"
+                        onblur="(this.type='text')">
+                    <i class="fa-regular fa-calendar-days date-icon"></i>
+                </div>
+                <button class="btn-secondary flex-btn">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>絞り込み</span>
+                </button>
+                <button class="btn-primary flex-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>新規お知らせ作成</span>
+                </button>
+            </div>
+
+            <div class="main-grid">
+
+                <div class="card-layout table-card">
+                    <table class="admin-table notice-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">お知らせID</th>
+                                <th style="width: 13%;">公開日</th>
+                                <th style="width: 12%;">カテゴリ</th>
+                                <th style="width: 36%;">タイトル</th>
+                                <th style="width: 10%;">状態</th>
+                                <th style="width: 14%; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="id-cell">N-2026-0420</td>
+                                <td>2026/4/20</td>
+                                <td><span class="notice-tag tag-important">重要</span></td>
+                                <td class="title-cell">ゴールデンウィーク期間中の開室時間について</td>
+                                <td><span class="status-badge status-success">公開中</span></td>
+                                <td>
+                                    <div class="action-cells">
+                                        <button class="btn-secondary btn-sm">詳細</button>
+                                        <button class="btn-secondary btn-sm">編集</button>
+                                        <button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="id-cell">N-2026-0418</td>
+                                <td>2026/4/18</td>
+                                <td><span class="notice-tag tag-other">その他</span></td>
+                                <td class="title-cell">履歴書・エントリーの添削について</td>
+                                <td><span class="status-badge status-success">公開中</span></td>
+                                <td>
+                                    <div class="action-cells">
+                                        <button class="btn-secondary btn-sm">詳細</button>
+                                        <button class="btn-secondary btn-sm">編集</button>
+                                        <button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="id-cell">N-2026-0428</td>
+                                <td>2026/4/28</td>
+                                <td><span class="notice-tag tag-other">その他</span></td>
+                                <td class="title-cell">利用者アンケートご協力のお願い</td>
+                                <td><span class="status-badge status-success">公開中</span></td>
+                                <td>
+                                    <div class="action-cells">
+                                        <button class="btn-secondary btn-sm">詳細</button>
+                                        <button class="btn-secondary btn-sm">編集</button>
+                                        <button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="id-cell">N-2026-0412</td>
+                                <td>2026/4/12</td>
+                                <td><span class="notice-tag tag-event">イベント</span></td>
+                                <td class="title-cell">自己分析セミナーの開催について</td>
+                                <td><span class="status-badge status-warning">下書き</span></td>
+                                <td>
+                                    <div class="action-cells">
+                                        <button class="btn-secondary btn-sm">詳細</button>
+                                        <button class="btn-secondary btn-sm">編集</button>
+                                        <button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="id-cell">N-2026-0401</td>
+                                <td>2026/4/1</td>
+                                <td><span class="notice-tag tag-important">重要</span></td>
+                                <td class="title-cell">4月の就職相談予約を開始しました</td>
+                                <td><span class="status-badge status-danger">終了</span></td>
+                                <td>
+                                    <div class="action-cells">
+                                        <button class="btn-secondary btn-sm">詳細</button>
+                                        <button class="btn-secondary btn-sm">編集</button>
+                                        <button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="table-footer">
+                        <div class="pagination">
+                            <button><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="active-page">1</div>
+                            <button><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <div class="table-info">全 5 件中 1〜5 件を表示</div>
+                    </div>
+                </div>
+
+                <div class="card-layout preview-card">
+                    <h3 class="preview-title">お知らせ詳細</h3>
+                    <hr class="preview-divider">
+
+                    <table class="preview-meta-table">
+                        <tr>
+                            <th>お知らせID</th>
+                            <td>N-2026-0420</td>
+                        </tr>
+                        <tr>
+                            <th>公開日</th>
+                            <td>2026/4/20</td>
+                        </tr>
+                        <tr>
+                            <th>カテゴリ</th>
+                            <td><span class="notice-tag tag-important">重要</span></td>
+                        </tr>
+                        <tr>
+                            <th>状態</th>
+                            <td><span class="status-badge status-success">公開中</span></td>
+                        </tr>
+                        <tr>
+                            <th>対象</th>
+                            <td>全学生</td>
+                        </tr>
+                        <tr>
+                            <th>作成者</th>
+                            <td>管理者</td>
+                        </tr>
+                    </table>
+
+                    <div class="preview-content-box">
+                        <div class="content-header">
+                            <div class="content-icon-circle">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                            <h4>ゴールデンウィーク期間中の開室時間について</h4>
+                        </div>
+                        <hr class="inner-divider">
+                        <p class="content-body">
+                            ゴールデンウィーク期間中のキャリアセンター開室時間は以下の通りです。<br>
+                            4/29、5/3〜5/6 は閉室、4/30〜5/2 は通常開室です。
+                        </p>
+                    </div>
+
+                    <div class="preview-actions">
+                        <button class="btn-action-blue"><i class="fa-solid fa-pen"></i>編集</button>
+                        <button class="btn-action-orange"><i class="fa-solid fa-circle-pause"></i>公開停止</button>
+                        <button class="btn-action-outline"><i class="fa-regular fa-eye"></i>プレビュー</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>マイページ - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="common.css">
+    <style>
+        body {
+            padding-bottom: 70px;
+        }
+
+        /* コンテナ */
+        .container {
+            padding: 15px;
+        }
+
+        /* プロフィールカード */
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .profile-icon {
+            font-size: 4rem;
+            color: #4ea9df;
+            margin-bottom: 10px;
+        }
+
+        .edit-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 16px;
+            border: 1px solid #4ea9df;
+            color: #4ea9df;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+        /* メニューリスト */
+        .menu-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item .material-icons {
+            margin-right: 15px;
+            color: #4ea9df;
+        }
+
+        .menu-text {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .menu-arrow {
+            color: #ccc;
+        }
+
+        /* ログアウトボタン */
+        .logout-btn {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: #666;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>マイページ</h1>
+        <a href="mypage.html" style="color: white; text-decoration: none; display: flex; align-items: center;">
+            <span class="material-icons">account_circle</span>
+        </a>
+    </header>
+
+    <main class="container">
+        <div class="profile-card">
+            <span class="material-icons profile-icon">account_circle</span>
+            <h2>東京 電子 さん</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">学籍番号: 24AH9999</p>
+            <a href="#" class="edit-btn">プロフィール編集</a>
+        </div>
+
+        <div class="menu-list">
+            <a href="#" class="menu-item"><span class="material-icons">person</span><span
+                    class="menu-text">基本情報</span><span class="material-icons menu-arrow">chevron_right</span></a>
+            <a href="#" class="menu-item"><span class="material-icons">mail</span><span
+                    class="menu-text">通知設定</span><span class="material-icons menu-arrow">chevron_right</span></a>
+            <a href="#" class="menu-item"><span class="material-icons">history</span><span
+                    class="menu-text">利用履歴</span><span class="material-icons menu-arrow">chevron_right</span></a>
+            <a href="#" class="menu-item"><span class="material-icons">help_outline</span><span
+                    class="menu-text">よくある質問</span><span class="material-icons menu-arrow">chevron_right</span></a>
+            <a href="#" class="menu-item"><span class="material-icons">support_agent</span><span
+                    class="menu-text">お問い合わせ</span><span class="material-icons menu-arrow">chevron_right</span></a>
+        </div>
+
+        <a href="#" class="logout-btn">
+            <span style="display:flex; align-items:center;"><span class="material-icons"
+                    style="margin-right:10px;">west</span>ログアウト</span>
+            <span class="material-icons">chevron_right</span>
+        </a>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <span class="material-icons">home</span><span>ホーム</span>
+        </a>
+        <a href="info.html" class="nav-item">
+            <span class="material-icons">mail</span><span>お知らせ</span>
+        </a>
+        <a href="check.html" class="nav-item">
+            <span class="material-icons">assignment</span><span>予約管理</span>
+        </a>
+    </nav>
+</body>
+
+</html>

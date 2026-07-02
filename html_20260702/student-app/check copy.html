@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>予約管理 - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* 基本スタイル */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: #f0f8ff; color: #333; padding-bottom: 80px; min-height: 100vh; }
+
+        /* ヘッダー */
+        .header { background-color: #4ea9df; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .header h1 { font-size: 1.1rem; }
+
+        /* ユーティリティエリア (検索、ボタン) */
+        .utility-area { padding: 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
+        .action-btns { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn-icon-box { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 12px; border-radius: 8px; border: none; cursor: pointer; color: white; font-weight: bold; text-decoration: none; }
+        .btn-filter { background-color: #4ea9df; }
+        .btn-new { background-color: #5bbd5a; }
+        
+        /* タブ (カレンダー表示中は非表示にすることも可能だが、今回は残す) */
+        .tabs { display: flex; background: white; border-radius: 8px; border: 1px solid #ddd; overflow: hidden; }
+        .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 0.8rem; cursor: pointer; color: #666; }
+        .tab.active { background: #4ea9df; color: white; font-weight: bold; }
+
+        /* カレンダーコンテナ */
+        .calendar-container { padding: 15px; overflow-x: auto; /* 横スクロール対応 */ }
+
+        /* カレンダーテーブル */
+        .calendar-table { width: 100%; min-width: 700px; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .calendar-table th, .calendar-table td { border: 1px solid #eee; padding: 10px; text-align: center; vertical-align: middle; }
+        .calendar-table th { background-color: #f8f9fa; font-size: 0.85rem; color: #555; }
+        .calendar-table th.time-col { width: 80px; }
+        .calendar-table td.time-label { font-weight: bold; color: #555; background-color: #fcfcfc; }
+
+        /* セルの内容 */
+        .cal-cell { height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 4px; }
+        .cal-cell:not(.empty):not(.not-available):hover { background-color: #e6f4fc; cursor: pointer; }
+
+        /* 空き枠 (予約可能) */
+        .cal-cell.empty { background-color: transparent; }
+
+        /* 予約済み (画像のデザインを参考に) */
+        .cal-cell.reserved { background-color: #e6f4fc; /* 薄い青背景 */ border: 1px solid #a0d2eb; }
+        .cal-cell.reserved .res-name { font-weight: bold; color: #1a608a; font-size: 0.9rem; }
+        .cal-cell.reserved .res-staff { color: #555; font-size: 0.75rem; }
+
+        /* 予約不可 (🚫 不可) */
+        .cal-cell.not-available { background-color: #f8f9fa; color: #888; font-size: 0.8rem; gap: 4px; }
+        .cal-cell.not-available .material-icons { font-size: 1rem; color: #dc3545; } /* 赤いアイコン */
+
+        /* ボトムナビゲーション */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background-color: #4ea9df; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 0.65rem; height: 100%; flex: 1; }
+        .nav-item .material-icons { font-size: 1.5rem; margin-bottom: 2px; }
+        .nav-item.active { color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>予約管理</h1>
+        <a href="mypage.html" style="color:white; text-decoration: none; display: flex; align-items: center;">
+            <span class="material-icons">account_circle</span>
+        </a>
+    </header>
+
+    <div class="utility-area">
+        <div class="search-container">
+            <input type="text" placeholder="キーワード検索">
+        </div>
+        <div class="action-btns">
+            <button class="btn-icon-box btn-filter"><span class="material-icons">filter_list</span>絞り込み</button>
+            <a href="reserve/reserve_form.html" class="btn-icon-box btn-new" style="text-decoration: none;">
+                <span class="material-icons">add_circle</span>新規予約
+            </a>
+        </div>
+        <div class="tabs" id="tabs">
+            <div class="tab">リスト表示</div>
+            <div class="tab active">カレンダー表示</div>
+        </div>
+    </div>
+
+    <main class="calendar-container">
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    <th class="time-col">時間</th>
+                    <th>4/13 (月)</th>
+                    <th>4/14 (火)</th>
+                    <th>4/15 (水)</th>
+                    <th>4/16 (木)</th>
+                    <th>4/17 (金)</th>
+                    <th>4/18 (土)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="time-label">午前</td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                </tr>
+                <tr>
+                    <td class="time-label">昼</td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                </tr>
+                <tr>
+                    <td class="time-label">午後</td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                </tr>
+                <tr>
+                    <td class="time-label">放課後</td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell empty"></div></td>
+                    <td><div class="cal-cell not-available"><span class="material-icons">block</span>不可</div></td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <span class="material-icons">home</span><span>ホーム</span>
+        </a>
+        <a href="info.html" class="nav-item">
+            <span class="material-icons">mail</span><span>お知らせ</span>
+        </a>
+        <a href="check.html" class="nav-item active">
+            <span class="material-icons">assignment</span><span>予約管理</span>
+        </a>
+    </nav>
+</body>
+</html>

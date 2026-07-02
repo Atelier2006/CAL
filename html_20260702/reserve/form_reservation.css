@@ -1,0 +1,90 @@
+/* --- スタイルを整えるCSS --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.form {
+    width: 100%;
+    max-width: 450px;
+    background-color: #fff;
+    padding: 30px 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    margin-top: 10px;
+}
+
+h2 {
+    font-size: 20px;
+    margin-bottom: 25px;
+    text-align: center;
+    color: #2c3e50;
+}
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #5a6a85;
+}
+
+/* 共通のスタイル（高さを合わせるなど） */
+select, input[type="text"] {
+    width: 100%;
+    height: 50px;
+    padding: 0 14px;
+    font-size: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #333;
+    transition: all 0.2s;
+}
+
+/* ★プルダウンだけ外見をリセットする（input[type="text"]には適用しない） */
+select {
+    -webkit-appearance: none;
+    appearance: none;
+}
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper::after {
+    content: '▼';
+    font-size: 10px;
+    color: #94a3b8;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+input[readonly] {
+    background-color: #f8fafc;
+    color: #475569;
+    border-color: #e2e8f0;
+    font-weight: 500;
+}
+
+select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}

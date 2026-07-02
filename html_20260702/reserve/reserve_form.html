@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約フォーム - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: #f0f8ff; padding-bottom: 80px; min-height: 100vh; }
+        
+        .header { background-color: #4ea9df; color: white; padding: 15px 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .header h1 { font-size: 1.1rem; }
+
+        .container { padding: 15px; }
+
+        .form-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
+        h2 { margin-bottom: 20px; color: #4ea9df; border-left: 4px solid #4ea9df; padding-left: 10px; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #555; }
+        
+        .select-wrapper select, input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; background: #fafafa; }
+        input[readonly] { background: #eee; color: #888; }
+
+        .submit-btn { width: 100%; padding: 15px; background: #4ea9df; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 60px; background-color: #4ea9df; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 0.65rem; }
+        .nav-item.active { color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>予約フォーム</h1>
+    </header>
+
+    <div class="container">
+        <div class="form-card"> <h2>予約画面</h2>
+            <form action="#" method="post">
+                <div class="form-group">
+                    <label for="class-select">クラス(学籍)</label> <div class="select-wrapper">
+                        <select name="class" id="class-select" required> </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="grade-select">学年</label>
+                    <div class="select-wrapper">
+                        <select name="grade" id="grade-select" required>
+                            <option value="" disabled selected>選択してください</option>
+                            <option value="1">1年</option>
+                            <option value="2">2年</option>
+                            <option value="3">3年</option>
+                            <option value="4">4年</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="number-select">番号</label>
+                    <div class="select-wrapper">
+                        <select name="number" id="number-select" required></select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="dept">学科名【自動入力】</label>
+                    <input type="text" id="dept" name="dept" readonly placeholder="自動入力されます">
+                </div>
+
+                <div class="form-group">
+                    <label for="name">名前</label>
+                    <input type="text" id="name" name="name" placeholder="山田 太郎" required autocorrect="off" autocapitalize="off" spellcheck="false">
+                </div>
+
+                <div class="form-group">
+                    <label for="purpose-select">使用用途</label>
+                    <div class="select-wrapper">
+                        <select name="purpose" id="purpose-select" required>
+                            <option value="" disabled selected>選択してください</option>
+                            <option value="consultation">相談</option>
+                            <option value="correction">添削</option>
+                            <option value="interview">面接</option>
+                            <option value="others">その他</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="other">その他</label>
+                    <input type="text" id="other" name="other" placeholder="例: 学校推薦状の発行について">
+                </div>
+                
+                <button type="submit" class="submit-btn">予約を送信</button>
+            </form>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="material-icons">home</span>ホーム</a>
+        <a href="info.html" class="nav-item"><span class="material-icons">mail</span>お知らせ</a>
+        <a href="check.html" class="nav-item"><span class="material-icons">assignment</span>予約管理</a>
+    </nav>
+</body>
+
+<script>
+    'use strict';
+
+    const classItems = [
+        "選択してください",
+        "AA", "AB", "AE", "AF", "AH",
+        // 以下、確認後変更
+        "F", "G", "H", "I", "J"
+    ];
+
+    const autoFillClass = {
+        "AA": "情報処理科",
+        "AB": "ウェブ・メディア科",
+        "AE": "高度情報システム科",
+        "AF": "セキュリティ・ネットワーク科",
+        "AH": "情報処理科３年制",
+        // 以下、確認後変更
+        "F": "診療放射線学科",
+        "G": "臨床工学科",
+        "H": "臨床検査学科",
+        "I": "電気技術科",
+        "J": "電気工学科"
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // --- クラスのプルダウン ---
+        const classSelect = document.getElementById('class-select');
+
+        classItems.forEach(item => {
+            const option = document.createElement('option');
+            option.value = (item === "選択してください") ? "" : item;
+            option.textContent = item;
+            classSelect.appendChild(option);
+        });
+        // --- 番号のプルダウン ---
+        const numberSelect = document.getElementById('number-select');
+        // 最初に「選択してください」を追加
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "選択してください";
+        numberSelect.appendChild(defaultOption);
+
+        // ループで1〜50を追加
+        const maxNumber = 50;
+        for (let i = 1; i <= maxNumber; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            numberSelect.appendChild(option);
+        }
+        //1つ目が選ばれたら自動入力する処理
+        const dept = document.getElementById('dept'); // 入力先の要素
+
+        classSelect.addEventListener('change', (event) => {
+            const deptSelect = event.target.value; // 選択された値（A, B, C...）
+
+            // 選択された値に対応するデータがあるかチェック
+            if (autoFillClass[deptSelect]) {
+                // データがあればそれをテキストボックスに代入
+                dept.value = autoFillClass[deptSelect];
+            } else {
+                // 「選択してください」に戻った時は空にする
+                dept.value = "";
+            }
+        });
+    });
+</script>
+</html>

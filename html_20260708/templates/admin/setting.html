@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャリアセンター管理画面 - 設定</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        /* ==========================================
+           1. 全体共通・ベーススタイル
+           ========================================== */
+        html {
+            scroll-behavior: smooth; /* これでスクロールが滑らかになります */
+        }
+
+        /* ページタイトル */
+        .page-title h1 {
+            font-size: 20px;
+            margin: 0 0 4px 0;
+            font-weight: bold;
+        }
+
+        .page-title p {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* 共通カードレイアウト */
+        .card-layout {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            box-sizing: border-box;
+            /* スクロールした時にヘッダーや余白とのバランスを保つための微調整設定 */
+            scroll-margin-top: 24px; 
+        }
+
+        /* ==========================================
+           4. 設定画面 固有スタイル
+           ========================================== */
+
+        /* 左右レイアウト */
+        .setting-grid {
+            display: grid;
+            grid-template-columns: 73% 27%;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* 左側フォームエリアの並び */
+        .form-section-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* セクションタイトル */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 0 0 20px 0;
+        }
+
+        .section-title i {
+            font-size: 16px;
+            color: #005bac;
+        }
+
+        /* グリッド風フォームレイアウト */
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            width: 160px;
+            font-size: 13px;
+            color: #4b5563;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .form-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        /* 入力フォーム共通 */
+        .form-control {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #1f2937;
+            background-color: #fff;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #005bac;
+            box-shadow: 0 0 0 2px rgba(0, 91, 172, 0.1);
+        }
+
+        select.form-control {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            padding-right: 32px;
+        }
+
+        /* セレクトボックスのカスタム矢印 */
+        .select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-arrow {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        /* 単位付き入力欄の調整 */
+        .input-unit {
+            font-size: 13px;
+            color: #4b5563;
+            flex-shrink: 0;
+        }
+
+        /* トグルスイッチ（通知設定用） */
+        .toggle-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d5db;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #005bac;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* 右側固定表示のための位置調整 */
+        .side-panel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 24px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 0 0 16px 0;
+        }
+
+        /* ナビゲーションメニューリスト */
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 6px;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .menu-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item-left i {
+            width: 16px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .menu-item .chevron {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        /* 保存ボタン */
+        .btn-submit {
+            width: 100%;
+            height: 40px;
+            background-color: #005bac;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #1e73be;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-hotel"></i>
+            <span>設定画面</span>
+        </div>
+        <div class="user-menu">
+            <div class="avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <span>管理者</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </header>
+
+    <div class="app-container">
+
+        <aside>
+            <nav>
+                <a href="dashboard.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="reservation.html">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>予約画面</span>
+                </a>
+                <!-- <a href="student.html">
+                    <i class="fa-solid fa-users"></i>
+                    <span>学生管理</span>
+                </a> -->
+                <a href="notice.html">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>お知らせ管理</span>
+                </a>
+                <a href="staff.html">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>相談員管理</span>
+                </a>
+                <!-- <a href="report.html">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>レポート</span>
+                </a> -->
+                <a href="setting.html" class="active">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main>
+            <div class="page-title">
+                <h1>設定</h1>
+                <p>システムの基本設定を管理します</p>
+            </div>
+
+            <div class="setting-grid">
+
+                <div class="form-section-container">
+                    
+                    <div class="card-layout" id="basic-info">
+                        <h3 class="section-title">
+                            <i class="fa-solid fa-circle-info"></i>基本情報
+                        </h3>
+                        <div class="form-group">
+                            <label class="form-label">センター名</label>
+                            <div class="form-input-wrapper">
+                                <input type="text" class="form-control" value="東京電子大学 キャリアセンター">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">メールアドレス</label>
+                            <div class="form-input-wrapper">
+                                <input type="email" class="form-control" value="career@tokyo-ec.ac.jp">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">電話番号</label>
+                            <div class="form-input-wrapper">
+                                <input type="text" class="form-control" value="03-1234-5678">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-layout" id="booking-settings">
+                        <h3 class="section-title">
+                            <i class="fa-solid fa-calendar-days"></i>予約設定
+                        </h3>
+                        <div class="form-group">
+                            <label class="form-label">受付開始日数</label>
+                            <div class="form-input-wrapper">
+                                <div class="select-wrapper">
+                                    <select class="form-control">
+                                        <option>30日前から</option>
+                                        <option>14日前から</option>
+                                        <option>7日前から</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">受付締切</label>
+                            <div class="form-input-wrapper">
+                                <div class="select-wrapper">
+                                    <select class="form-control">
+                                        <option>前日17:00まで</option>
+                                        <option>当日の開始時間まで</option>
+                                        <option>2日前まで</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">1日の上限件数</label>
+                            <div class="form-input-wrapper">
+                                <input type="number" class="form-control" value="20" style="max-width: 120px;">
+                                <span class="input-unit">件</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-layout" id="notification-settings">
+                        <h3 class="section-title">
+                            <i class="fa-solid fa-bell"></i>通知設定
+                        </h3>
+                        <div class="form-group toggle-wrapper">
+                            <label class="form-label">メール通知</label>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group toggle-wrapper">
+                            <label class="form-label">リマインド通知</label>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="card-layout" id="account-settings">
+                        <h3 class="section-title">
+                            <i class="fa-solid fa-user"></i>アカウント設定
+                        </h3>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0;">アカウント情報の変更やセキュリティ設定は現在準備中です。</p>
+                    </div>
+
+                </div>
+
+                <div class="side-panel-container">
+                    
+                    <div class="card-layout">
+                        <h3 class="panel-title">設定メニュー</h3>
+                        <div class="menu-list">
+                            <a href="#basic-info" class="menu-item">
+                                <div class="menu-item-left">
+                                    <i class="fa-solid fa-circle-info" style="color: #005bac;"></i>
+                                    <span>基本情報</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right chevron"></i>
+                            </a>
+                            <a href="#booking-settings" class="menu-item">
+                                <div class="menu-item-left">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                    <span>予約設定</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right chevron"></i>
+                            </a>
+                            <a href="#notification-settings" class="menu-item">
+                                <div class="menu-item-left">
+                                    <i class="fa-solid fa-bell"></i>
+                                    <span>通知設定</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right chevron"></i>
+                            </a>
+                            <a href="#account-settings" class="menu-item">
+                                <div class="menu-item-left">
+                                    <i class="fa-solid fa-user"></i>
+                                    <span>アカウント設定</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right chevron"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card-layout">
+                        <h3 class="panel-title">保存</h3>
+                        <button class="btn-submit">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>変更を保存</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

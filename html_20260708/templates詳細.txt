@@ -1,0 +1,28 @@
+templates配下
+※Flaskの仕組み上、htmlファイルをtemplates配下に置く必要あり
+
+admin（職員側）
+・dashboard
+・notice
+・reservation
+・settiing
+・staff
+
+
+user（学生側）
+・check
+・check copy
+・check copy 2
+・home
+・info
+・mypage
+・yoyaku
+
+reserve（もともとuser内にあった）
+・reserve_c
+・reserve_form
+
+css
+・common_a→admin（分からなくならないように一時的に名前変更しただけです）
+・common→user
+・reserve_form

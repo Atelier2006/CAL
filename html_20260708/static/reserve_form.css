@@ -1,0 +1,32 @@
+/* チップのスタイル */
+.badge-required {
+    background-color: #ffeded;
+    color: #ff4d4f;
+    font-size: 12px;
+    padding: 2px 6px;
+    border: 1px solid #ff4d4f;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+/*headerのスタイル*/
+
+/* プルダウンの外観を整える */
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    appearance: none; /* デフォルトの矢印を消してカスタマイズしやすくする */
+    cursor: pointer;
+}
+form{
+    display: flex;
+    flex-direction: column;
+}
+@media screen and (max-width:480px) {
+    body{
+        width: 100%;
+        background-color: #f0f8ff;
+    }
+}

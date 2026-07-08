@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャリアセンター管理画面 - ダッシュボード</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        /* 1番目の列：日程 */
+        table th:nth-child(1),
+        table td:nth-child(1) {
+            width: 25%;
+        }
+
+        /* 2番目の列：相談内容/学生名 */
+        table th:nth-child(2),
+        table td:nth-child(2) {
+            width: 25%;
+        }
+
+        /* 3番目の列：場所 */
+        table th:nth-child(3),
+        table td:nth-child(3) {
+            width: 20%;
+        }
+
+        /* 4番目の列：相談員 */
+        table th:nth-child(4),
+        table td:nth-child(4) {
+            width: 20%;
+        }
+
+        /* セル内で文字が溢れた場合のバグを防ぐ設定 */
+        table td {
+            word-break: break-all;
+        }
+
+        /* ステータスボタン自体の幅を自動調整し、文字の折り返しを防ぐ */
+        table td span,
+        table td .status-badge {
+            display: inline-block;
+            width: auto !important;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* 白いベースのカード */
+        .card-layout {
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            padding: 16px;
+        }
+
+        /* 丸いアイコン枠 */
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: 1px solid transparent;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+
+        .status-success {
+            background-color: #eff6ff;
+            color: #3b82f6;
+            border-color: #bfdbfe;
+        }
+
+        .status-warning {
+            background-color: #fff7ed;
+            color: #f97316;
+            border-color: #fed7aa;
+        }
+
+        .status-danger {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+        }
+
+        /* 白ベースのボタン */
+        .btn-secondary {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #1e73be;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px 12px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f9fafb;
+        }
+
+        /* テーブル設定 */
+        .admin-table {
+            width: 100%;
+            text-align: left;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+
+        .admin-table thead tr {
+            background-color: #f9fafb;
+            color: #6b7280;
+            border-bottom: 1px solid #f3f4f6;
+            font-weight: bold;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 12px;
+            vertical-align: middle;
+        }
+
+        .admin-table tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            /* 行全体をクリックできるようにカーソルをポインターに */
+        }
+
+        .admin-table tbody tr:hover {
+            background-color: rgba(30, 115, 190, 0.05);
+            /* ホバー時は少し青みがかった色に */
+        }
+
+        /* 選択されている行のスタイル */
+        .admin-table tbody tr.selected-row {
+            background-color: rgba(30, 115, 190, 0.08) !important;
+            border-left: 3px solid #1e73be;
+        }
+
+        /* ==========================================
+        3. 各画面固有・パーツ固有のスタイル
+           ========================================== */
+
+        /* 5列の統計カードグリッド */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+
+        .stats-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-card .label {
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: bold;
+            margin: 0 0 4px 0;
+        }
+
+        .stats-card .number {
+            font-size: 30px;
+            font-weight: 300;
+            font-family: monospace;
+            margin: 0;
+        }
+
+        .stats-card .unit {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-left: 4px;
+        }
+
+        /* 下段の2カラムレイアウト */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* 予約一覧カード内 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .card-title i {
+            font-size: 18px;
+            color: #1e73be;
+        }
+
+        /* ページネーション */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .pagination button:hover {
+            color: #6b7280;
+        }
+
+        .pagination .active-page {
+            width: 24px;
+            height: 24px;
+            background-color: #1e73be;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 右側：最近のお知らせリスト */
+        .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .notice-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 4px;
+            border-bottom: 1px solid #f9fafb;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .notice-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .notice-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .notice-date {
+            color: #9ca3af;
+        }
+
+        .notice-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid transparent;
+        }
+
+        .tag-important {
+            background-color: #fef2f2;
+            color: #ef4444;
+            border-color: #fee2e2;
+        }
+
+        .tag-other {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border-color: #dcfce7;
+        }
+
+        .tag-gray {
+            background-color: #f9fafb;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+
+        .notice-text {
+            font-weight: medium;
+            color: #374151;
+            margin: 0;
+        }
+
+        /* 右側：対象学生情報 */
+        .student-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .student-avatar {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(to top right, #dbeafe, #e0e7ff);
+            color: #1e73be;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eff6ff;
+        }
+
+        .student-info {
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .student-name-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .student-label {
+            width: 50px;
+            /* 位置が揃うように固定幅を確保 */
+            font-size: 10px;
+            color: #9ca3af;
+            font-weight: bold;
+        }
+
+        .student-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .student-detail {
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .next-reservation {
+            background-color: rgba(239, 246, 255, 0.7);
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            margin-top: 16px;
+        }
+
+        .next-reservation .badge {
+            font-weight: bold;
+            color: #2563eb;
+            background-color: rgba(219, 234, 254, 0.6);
+            border: 1px solid #93c5fd;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .next-reservation .datetime {
+            font-weight: medium;
+            color: #374151;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-hotel"></i>
+            <span>キャリアセンター管理画面</span>
+        </div>
+        <div class="user-menu">
+            <div class="avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <span>管理者</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </header>
+
+    <div class="app-container">
+
+        <aside>
+            <nav>
+                <a href="dashboard.html" class="active">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="reservation.html">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>予約画面</span>
+                </a>
+                <!-- <a href="student.html">
+                    <i class="fa-solid fa-users"></i>
+                    <span>学生管理</span>
+                </a> -->
+                <a href="notice.html">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>お知らせ管理</span>
+                </a>
+                <a href="staff.html">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>相談員管理</span>
+                </a>
+                <!-- <a href="report.html">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>レポート</span>
+                </a> -->
+                <a href="setting.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main>
+
+            <div class="stats-grid">
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #bfdbfe; color: #3b82f6;">
+                        <i class="fa-regular fa-calendar"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">総予約数</p>
+                        <p class="number" style="color: #2563eb;">3<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle"
+                        style="border-color: #93c5fd; background-color: rgba(239,246,255,0.5); color: #1e73be;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">予約済み</p>
+                        <p class="number" style="color: #1e73be;">1<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #fed7aa; color: #f97316;">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">予約中</p>
+                        <p class="number" style="color: #f97316;">1<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #d1d5db; color: #9ca3af;">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">キャンセル</p>
+                        <p class="number" style="color: #9ca3af;">1<span class="unit">件</span></p>
+                    </div>
+                </div>
+
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color: #a5f3fc; color: #06b6d4;">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="label">公開中のお知らせ</p>
+                        <p class="number" style="color: #0891b2;">3<span class="unit">件</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+
+                <div class="card-layout">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-regular fa-calendar-days"></i>
+                            <span>予約一覧</span>
+                        </div>
+                        <button class="btn-secondary" style="display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-filter" style="font-size: 10px;"></i>
+                            <span>絞り込み</span>
+                        </button>
+                    </div>
+
+                    <table class="admin-table" id="reservationTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">日程</th>
+                                <th style="width: 25%;">相談内容 / 学生名</th>
+                                <th style="width: 20%;">場所</th>
+                                <th style="width: 20%;">相談員</th>
+                                <th style="text-align: center;">ステータス</th>
+                                <th style="text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="selected-row" data-name="猪名寺 乱太郎" data-id="24AH9999" data-grade="情報処理科 3年"
+                                data-next="2026/4/10 (水) 15:00〜16:00">
+                                <td style="line-height: 1.6; font-weight: 500;">
+                                    <span>2026/4/10 (水)</span><br>
+                                    <span style="color: #9ca3af; font-weight: normal;">15:00〜16:00</span>
+                                </td>
+                                <td style="line-height: 1.6;">
+                                    <span style="font-weight: bold; color: #1f2937;">就職相談 (個別)</span><br>
+                                    <span style="color: #6b7280;" class="row-student-name">猪名寺 乱太郎</span>
+                                </td>
+                                <td style="color: #6b7280; line-height: 1.6;">2号館13階</td>
+                                <td style="line-height: 1.6;">
+                                    <span style="font-weight: bold; color: #1f2937;">山田 伝蔵</span><br>
+                                    <span style="font-size: 10px; color: #9ca3af;">キャリアアドバイザー</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="status-badge status-success">予約済み</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <button class="btn-secondary btn-detail" style="padding: 4px 10px;">詳細</button>
+                                </td>
+                            </tr>
+                            <tr data-name="立花 仙蔵" data-id="24AH1122" data-grade="Webデザイン科 2年"
+                                data-next="2026/4/18 (木) 15:00〜16:00">
+                                <td style="line-height: 1.6; font-weight: 500;">
+                                    <span>2026/4/18 (木)</span><br>
+                                    <span style="color: #9ca3af; font-weight: normal;">15:00〜16:00</span>
+                                </td>
+                                <td style="line-height: 1.6;">
+                                    <span style="font-weight: bold; color: #1f2937;">模擬面接</span><br>
+                                    <span style="color: #6b7280;" class="row-student-name">立花 仙蔵</span>
+                                </td>
+                                <td style="color: #6b7280; line-height: 1.6;">2号館6階</td>
+                                <td style="line-height: 1.6;">
+                                    <span style="font-weight: bold; color: #1f2937;">土井 半助</span><br>
+                                    <span style="font-size: 10px; color: #9ca3af;">キャリアアドバイザー</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="status-badge status-warning">予約中</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <button class="btn-secondary btn-detail" style="padding: 4px 10px;">詳細</button>
+                                </td>
+                            </tr>
+                            <tr data-name="ヘムヘム" data-id="24AH5566" data-grade="Webデザイン科 1年" data-next="なし (キャンセル)">
+                                <td style="line-height: 1.6; font-weight: 500;">
+                                    <span>2026/4/28 (木)</span><br>
+                                    <span style="color: #9ca3af; font-weight: normal;">15:00〜16:00</span>
+                                </td>
+                                <td style="line-height: 1.6;">
+                                    <span style="font-weight: bold; color: #1f2937;">履歴書添削</span><br>
+                                    <span style="color: #6b7280;" class="row-student-name">ヘムヘム</span>
+                                </td>
+                                <td style="color: #6b7280; line-height: 1.6;">2号館4階</td>
+                                <td style="line-height: 1.6;">
+                                    <span style="font-weight: bold; color: #1f2937;">大川平次渦正</span><br>
+                                    <span style="font-size: 10px; color: #9ca3af;">キャリアアドバイザー</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="status-badge status-danger">キャンセル</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <button class="btn-secondary btn-detail" style="padding: 4px 10px;">詳細</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pagination">
+                        <button><i class="fa-solid fa-chevron-left"></i></button>
+                        <div class="active-page">1</div>
+                        <button><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+
+                    <div class="card-layout">
+                        <div class="card-header" style="margin-bottom: 12px;">
+                            <div class="card-title" style="font-size: 14px;">
+                                <i class="fa-solid fa-bullhorn"></i>
+                                <span>最近のお知らせ</span>
+                            </div>
+                            <a href="notice.html"
+                                style="font-size: 12px; color: #3b82f6; text-decoration: none; display: flex; align-items: center; gap: 2px;">
+                                <span>すべて見る</span>
+                                <i class="fa-solid fa-chevron-right" style="font-size: 8px;"></i>
+                            </a>
+                        </div>
+
+                        <div class="notice-list">
+                            <a href="notice.html" class="notice-item">
+                                <div>
+                                    <div class="notice-meta">
+                                        <span class="notice-date">2026/4/20</span>
+                                        <span class="notice-tag tag-important">重要</span>
+                                    </div>
+                                    <p class="notice-text">ゴールデンウィーク期間中の開室時間について</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right"
+                                    style="color: #d1d5db; font-size: 10px; padding-left: 8px;"></i>
+                            </a>
+                            <a href="notice.html" class="notice-item">
+                                <div>
+                                    <div class="notice-meta">
+                                        <span class="notice-date">2026/4/18</span>
+                                        <span class="notice-tag tag-other">その他</span>
+                                    </div>
+                                    <p class="notice-text">履歴書・エントリーの添削について</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right"
+                                    style="color: #d1d5db; font-size: 10px; padding-left: 8px;"></i>
+                            </a>
+                            <a href="notice.html" class="notice-item" style="border-bottom: none;">
+                                <div>
+                                    <div class="notice-meta">
+                                        <span class="notice-date">2026/4/28</span>
+                                        <span class="notice-tag tag-gray">その他</span>
+                                    </div>
+                                    <p class="notice-text">利用者アンケートご協力のお願い</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right"
+                                    style="color: #d1d5db; font-size: 10px; padding-left: 8px;"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card-layout">
+                        <div class="card-title" style="font-size: 14px;">
+                            <i class="fa-regular fa-user"></i>
+                            <span>対象学生情報</span>
+                        </div>
+
+                        <div class="student-profile">
+                            <div class="student-avatar">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="student-info">
+                                <div class="student-name-row">
+                                    <span class="student-label">氏名</span>
+                                    <span class="student-name" id="targetName">東京 電子</span>
+                                </div>
+                                <p class="student-detail">学籍番号：<span style="font-family: monospace;"
+                                        id="targetId">24AH9999</span></p>
+                                <p class="student-detail">学年：<span id="targetGrade">情報処理科 3年</span></p>
+                            </div>
+                        </div>
+
+                        <div class="next-reservation">
+                            <span class="badge">次回予約</span>
+                            <span class="datetime" id="targetNext">2026/4/10 (水) 15:00〜16:00</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rows = document.querySelectorAll('#reservationTable tbody tr');
+            const targetName = document.getElementById('targetName');
+            const targetId = document.getElementById('targetId');
+            const targetGrade = document.getElementById('targetGrade');
+            const targetNext = document.getElementById('targetNext');
+
+            rows.forEach(row => {
+                row.addEventListener('click', () => {
+                    // 1. 全ての行から選択ハイライトを消す
+                    rows.forEach(r => r.classList.remove('selected-row'));
+
+                    // 2. クリックされた行にハイライトをつける
+                    row.classList.add('selected-row');
+
+                    // 3. 行が持っているカスタムデータ属性を取得
+                    const name = row.getAttribute('data-name');
+                    const id = row.getAttribute('data-id');
+                    const grade = row.getAttribute('data-grade');
+                    const next = row.getAttribute('data-next');
+
+                    // 4. 右側の「対象学生情報」を書き換える
+                    targetName.textContent = name;
+                    targetId.textContent = id;
+                    targetGrade.textContent = grade;
+                    targetNext.textContent = next;
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

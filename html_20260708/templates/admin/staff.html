@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャリアセンター管理画面 - 予約画面</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        /* ==========================================
+           2. 共通パーツ・コンポーネント
+           ========================================== */
+        .card-layout {
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            padding: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .card-title i {
+            font-size: 18px;
+            color: #1e73be;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .status-success { background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
+        .status-warning { background-color: #fff7ed; color: #f97316; border: 1px solid #fed7aa; }
+        .status-danger { background-color: #fef2f2; color: #ef4444; border: 1px solid #fca5a5; }
+        .status-empty { background-color: #ffffff; color: #6b7280; border: 1px solid #e5e7eb; }
+
+        /* ボタン */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #1e73be;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 8px 12px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover { background-color: #005bac; }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #1e73be;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 8px 12px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover { background-color: #f9fafb; }
+
+        /* ==========================================
+           3. 予約画面固有のスタイル
+           ========================================== */
+        /* フィルターエリア（横幅を左カラムにピッタリ合わせる調整） */
+        .filter-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-section select, .filter-section input {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        /* 2カラムのメインレイアウト（グリッドを最上部から開始） */
+        .reservation-grid {
+            display: grid;
+            grid-template-columns: 2.8fr 1.2fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* 左カラム（フィルターとカレンダーを内包させて右のパネルと高さを独立させる） */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .calendar-control { display: flex; align-items: center; gap: 16px; }
+        .calendar-control .current-date { font-size: 16px; font-weight: bold; min-width: 150px; text-align: center; }
+
+        /* タイムテーブル */
+        .timetable { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .timetable th, .timetable td { border: 1px solid #e5e7eb; padding: 8px; text-align: center; vertical-align: middle; font-size: 12px; }
+        .timetable th { background-color: #f9fafb; color: #4b5563; font-weight: bold; width: 13%; }
+        .timetable th:first-child { width: 9%; background-color: #f3f4f6; }
+        .timetable td:first-child { background-color: #f9fafb; font-weight: bold; color: #6b7280; }
+        .timetable td.slot-cell { padding: 4px; height: 55px; }
+
+        /* コマのデザイン */
+        .time-slot {
+            display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center;
+            padding: 4px; border-radius: 6px; transition: all 0.2s; cursor: pointer; height: 100%; box-sizing: border-box;
+        }
+        .time-slot.is-selected { outline: 2px solid #1e73be; outline-offset: -1px; box-shadow: 0 0 6px rgba(30, 115, 190, 0.3); }
+
+        .slot-booked { background-color: #eff6ff; border: 1px solid #bfdbfe; }
+        .slot-booked:hover { background-color: #dbeafe; }
+        .slot-waiting { background-color: #fff7ed; border: 1px solid #fed7aa; }
+        .slot-waiting:hover { background-color: #ffedd5; }
+
+        /* 空欄マス */
+        .slot-empty { background-color: #ffffff; border: 1px solid #e5e7eb; }
+        .slot-empty:hover { background-color: #f9fafb; border-color: #1e73be; }
+
+        /* 不可マス */
+        .slot-none { background-color: #f3f4f6; color: #9ca3af; border: 1px solid #e5e7eb; }
+        .slot-none:hover { background-color: #e5e7eb; }
+
+        .slot-student { font-weight: bold; color: #1f2937; }
+        .slot-advisor { font-size: 10px; color: #6b7280; }
+
+        /* ==========================================
+           4. 右側：インライン詳細・編集フォームパネル
+           ========================================== */
+        .panel-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .detail-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .detail-item {
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 8px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            color: #374151;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* パネル内の入力フォーム用スタイル */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #4b5563;
+        }
+
+        .form-group input, .form-group select {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            font-size: 12px;
+            outline: none;
+            background-color: #fff;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #1e73be;
+        }
+
+        .form-group input[readonly] {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-hotel"></i>
+            <span>予約管理画面</span>
+        </div>
+        <div class="user-menu">
+            <div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <span>管理者</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <aside>
+            <nav>
+                <a href="dashboard.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="reservation.html">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>予約画面</span>
+                </a>
+                <!-- <a href="student.html">
+                    <i class="fa-solid fa-users"></i>
+                    <span>学生管理</span>
+                </a> -->
+                <a href="notice.html">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>お知らせ管理</span>
+                </a>
+                <a href="staff.html" class="active">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>相談員管理</span>
+                </a>
+                <!-- <a href="report.html">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>レポート</span>
+                </a> -->
+                <a href="setting.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main style="padding-top: 24px;">
+            <!-- 2カラム構成のメインレイアウト（最上部から並列配置） -->
+            <div class="reservation-grid">
+                
+                <!-- 左カラム：フィルター ＋ カレンダー -->
+                <div class="left-column">
+                    <!-- フィルターエリア -->
+                    <div class="card-layout filter-section">
+                        <select name="view-type">
+                            <option value="week">週表示</option>
+                            <option value="day">日表示</option>
+                        </select>
+                        <select name="advisor-filter">
+                            <option value="all">すべての相談員</option>
+                            <option value="1">東京 A子</option>
+                            <option value="2">東京 B郎</option>
+                        </select>
+                        <select name="status-filter">
+                            <option value="all">すべてのステータス</option>
+                            <option value="booked">予約済み</option>
+                            <option value="waiting">予約中</option>
+                            <option value="empty">空欄（未登録）</option>
+                            <option value="none">予約不可</option>
+                        </select>
+                        <input type="text" placeholder="学生名・学籍番号で検索...">
+                        <button class="btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i><span>検索</span>
+                        </button>
+                    </div>
+
+                    <!-- カレンダー本体 -->
+                    <div class="card-layout">
+                        <div class="card-header">
+                            <div class="calendar-control">
+                                <button class="btn-secondary" style="padding: 6px 10px;"><i class="fa-solid fa-chevron-left"></i> 前週</button>
+                                <span class="current-date">2026年 4月13日 〜</span>
+                                <button class="btn-secondary" style="padding: 6px 10px;">次週 <i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                            <button class="btn-secondary"><i class="fa-regular fa-calendar-days"></i><span>今日</span></button>
+                        </div>
+
+                        <table class="timetable">
+                            <thead>
+                                <tr>
+                                    <th>時間</th>
+                                    <th>4/13 (月)</th>
+                                    <th>4/14 (火)</th>
+                                    <th>4/15 (水)</th>
+                                    <th>4/16 (木)</th>
+                                    <th>4/17 (金)</th>
+                                    <th>4/18 (土)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>午前</td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/13 (月) 午前" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/14 (火) 午前" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/15 (水) 午前" data-content="窓口閉鎖・相談員不在" data-location="ー" data-advisor="全体" data-student="予約不可">
+                                            <span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span>
+                                        </div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/16 (木) 午前" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/17 (金) 午前" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/18 (土) 午前" data-content="休業日" data-location="ー" data-advisor="全体" data-student="予約不可"><span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>昼</td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/13 (火) 昼" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/14 (火) 昼" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-waiting is-selected" data-status="waiting" data-datetime="2026/04/15 (水) 昼" data-content="インターンシップ相談" data-location="キャリアセンター" data-advisor="東京 A子" data-student="山田 伝子" data-student-id="24AH0002" data-student-dept="Webデザイン科 3年">
+                                            <span class="slot-student">山田 伝子</span><span class="slot-advisor">予約申請済み</span>
+                                        </div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/16 (木) 昼" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/17 (火) 昼" data-content="窓口閉鎖・相談員不在" data-location="ー" data-advisor="全体" data-student="予約不可">
+                                            <span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span>
+                                        </div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/18 (土) 昼" data-content="休業日" data-location="ー" data-advisor="全体" data-student="予約不可"><span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>午後</td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/13 (月) 午後" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/14 (火) 午後" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/13 (月) 午後" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/16 (木) 午後" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/17 (金) 午後" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/18 (土) 午後" data-content="休業日" data-location="ー" data-advisor="全体" data-student="予約不可"><span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>放課後</td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-booked" data-status="booked" data-datetime="2026/04/13 (月) 放課後" data-content="業界研究・企業選定" data-location="2号館13階" data-advisor="東京 A子" data-student="山田 伝子" data-student-id="24AH0002" data-student-dept="Webデザイン科 3年">
+                                            <span class="slot-student">山田 伝子</span><span class="slot-advisor">東京 A子</span>
+                                        </div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/14 (火) 放課後" data-advisor="東京 A子"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/15 (水) 放課後" data-content="窓口閉鎖・相談員不在" data-location="ー" data-advisor="全体" data-student="予約不可">
+                                            <span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span>
+                                        </div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/16 (木) 放課後" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-empty" data-status="empty" data-datetime="2026/04/17 (金) 放課後" data-advisor="東京 B郎"></div>
+                                    </td>
+                                    <td class="slot-cell">
+                                        <div class="time-slot slot-none" data-status="none" data-datetime="2026/04/18 (土) 放課後" data-content="休業日" data-location="ー" data-advisor="全体" data-student="予約不可"><span class="slot-student"><i class="fa-solid fa-ban"></i> 不可</span></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 右カラム：最上部に揃えて配置されるインライン詳細・編集パネル -->
+                <div class="card-layout" id="side-panel">
+                    
+                    <!-- パターンA: 閲覧モード用コンテナ -->
+                    <div id="panel-view-mode" class="panel-section">
+                        <div class="card-header" style="margin-bottom: 0;">
+                            <div class="card-title" style="font-size: 14px;">
+                                <i class="fa-solid fa-circle-info"></i><span id="info-panel-title">選択中の予約詳細</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-warning" id="detail-status">予約中</span>
+                        </div>
+                        <div class="detail-list">
+                            <div class="detail-item">
+                                <div class="detail-label">日時</div>
+                                <div class="detail-value" id="detail-datetime">2026/04/15 (水) 11:00〜12:00</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">相談内容 / 理由</div>
+                                <div class="detail-value" id="detail-content">インターンシップ相談</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">場所</div>
+                                <div class="detail-value" id="detail-location">オンライン (Zoom)</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">担当相談員</div>
+                                <div class="detail-value" id="detail-advisor">東京 B郎</div>
+                            </div>
+                            <div class="detail-item" id="detail-student-block">
+                                <div class="detail-label">予約学生</div>
+                                <div class="detail-value" style="font-size: 14px; font-weight: bold;" id="detail-student">名古屋 次郎</div>
+                                <div class="detail-value" style="color: #6b7280; font-size: 11px; margin-top: 2px;" id="detail-student-info">学籍番号: 24AH0002<br>Webデザイン科 3年</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                            <button class="btn-primary" id="panel-btn-edit">
+                                <i class="fa-solid fa-check"></i> 予約を承認する
+                            </button>
+                            <button class="btn-secondary" style="color: #ef4444; border-color: #fee2e2;" id="panel-btn-delete">
+                                <i class="fa-solid fa-trash-can"></i> 却下・削除
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- パターンB: 入力・編集モード用コンテナ（初期非表示） -->
+                    <div id="panel-edit-mode" class="panel-section" style="display: none;">
+                        <div class="card-header" style="margin-bottom: 0;">
+                            <div class="card-title" style="font-size: 14px; color: #1e73be;">
+                                <i class="fa-solid fa-calendar-plus"></i><span id="form-panel-title">予約枠の新規登録</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>対象日時</label>
+                            <input type="text" id="form-datetime" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>ステータス設定</label>
+                            <select id="form-status">
+                                <option value="empty">通常通り空き枠として公開</option>
+                                <option value="booked">直接予約を入れる（予約済み）</option>
+                                <option value="none">予約不可に設定（不在・閉鎖）</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>担当相談員</label>
+                            <select id="form-advisor">
+                                <option value="東京 A子">東京 A子</option>
+                                <option value="東京 B郎">東京 B郎</option>
+                                <option value="全体">全体・共通</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="form-student-group">
+                            <label>学生情報（名前 / 学籍番号）</label>
+                            <input type="text" id="form-student" placeholder="例: 東京 電子 (24AH9999)">
+                        </div>
+                        <div class="form-group">
+                            <label>相談内容 / 不可の理由</label>
+                            <input type="text" id="form-content" placeholder="例: 就職相談、窓口閉鎖など">
+                        </div>
+                        <div class="form-group">
+                            <label>実施場所</label>
+                            <input type="text" id="form-location" placeholder="例: 2号館13階、Zoomなど">
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button class="btn-secondary" style="flex: 1;" id="form-btn-cancel">変更破棄</button>
+                            <button class="btn-primary" style="flex: 1.5;" id="form-btn-save"><i class="fa-solid fa-check"></i> 保存する</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewModeContainer = document.getElementById('panel-view-mode');
+            const editModeContainer = document.getElementById('panel-edit-mode');
+
+            const infoPanelTitle = document.getElementById('info-panel-title');
+            const detailStatus = document.getElementById('detail-status');
+            const detailDatetime = document.getElementById('detail-datetime');
+            const detailContent = document.getElementById('detail-content');
+            const detailLocation = document.getElementById('detail-location');
+            const detailAdvisor = document.getElementById('detail-advisor');
+            const detailStudentBlock = document.getElementById('detail-student-block');
+            const detailStudent = document.getElementById('detail-student');
+            const detailStudentInfo = document.getElementById('detail-student-info');
+            const panelBtnEdit = document.getElementById('panel-btn-edit');
+            const panelBtnDelete = document.getElementById('panel-btn-delete');
+
+            const formPanelTitle = document.getElementById('form-panel-title');
+            const formDatetime = document.getElementById('form-datetime');
+            const formStatus = document.getElementById('form-status');
+            const formAdvisor = document.getElementById('form-advisor');
+            const formStudentGroup = document.getElementById('form-student-group');
+            const formStudent = document.getElementById('form-student');
+            const formContent = document.getElementById('form-content');
+            const formLocation = document.getElementById('form-location');
+            const formBtnCancel = document.getElementById('form-btn-cancel');
+            const formBtnSave = document.getElementById('form-btn-save');
+
+            let currentSelectedSlot = document.querySelector('.time-slot.is-selected');
+
+            const slots = document.querySelectorAll('.time-slot');
+
+            slots.forEach(slot => {
+                slot.addEventListener('click', () => {
+                    slots.forEach(s => s.classList.remove('is-selected'));
+                    slot.classList.add('is-selected');
+                    currentSelectedSlot = slot;
+
+                    const status = slot.getAttribute('data-status');
+                    const datetime = slot.getAttribute('data-datetime');
+                    const content = slot.getAttribute('data-content') || '';
+                    const location = slot.getAttribute('data-location') || '';
+                    const advisor = slot.getAttribute('data-advisor') || '東京 A子';
+                    const student = slot.getAttribute('data-student') || '';
+                    const studentId = slot.getAttribute('data-student-id') || '';
+                    const studentDept = slot.getAttribute('data-student-dept') || '';
+
+                    if (status === 'empty') {
+                        switchToEditMode(true, datetime, advisor);
+                        return;
+                    }
+
+                    switchToViewMode();
+
+                    detailDatetime.textContent = datetime;
+                    detailContent.textContent = content || 'ー';
+                    detailLocation.textContent = location || 'ー';
+                    detailAdvisor.textContent = advisor;
+
+                    detailStatus.className = 'status-badge';
+
+                    if (status === 'booked') {
+                        infoPanelTitle.textContent = '選択中の予約詳細';
+                        detailStatus.textContent = '予約済み';
+                        detailStatus.classList.add('status-success');
+                        detailStudentBlock.style.display = 'block';
+                        detailStudent.textContent = student;
+                        detailStudentInfo.innerHTML = `学籍番号: ${studentId}<br>${studentDept}`;
+                        panelBtnEdit.style.display = 'inline-flex';
+                        panelBtnEdit.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 予約内容を編集';
+                        panelBtnDelete.innerHTML = '<i class="fa-solid fa-trash-can"></i> 予約をキャンセル';
+                    } else if (status === 'waiting') {
+                        infoPanelTitle.textContent = '選択中の予約詳細';
+                        detailStatus.textContent = '予約中';
+                        detailStatus.classList.add('status-warning');
+                        detailStudentBlock.style.display = 'block';
+                        detailStudent.textContent = student;
+                        detailStudentInfo.innerHTML = `学籍番号: ${studentId}<br>${studentDept}`;
+                        panelBtnEdit.style.display = 'inline-flex';
+                        panelBtnEdit.innerHTML = '<i class="fa-solid fa-check"></i> 予約を承認する';
+                        panelBtnDelete.innerHTML = '<i class="fa-solid fa-trash-can"></i> 却下・削除';
+                    } else if (status === 'none') {
+                        infoPanelTitle.textContent = '設定済みの不可スケジュール';
+                        detailStatus.textContent = '予約不可枠';
+                        detailStatus.classList.add('status-danger');
+                        detailStudentBlock.style.display = 'none';
+                        panelBtnEdit.style.display = 'inline-flex';
+                        panelBtnEdit.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 不可設定を変更';
+                        panelBtnDelete.innerHTML = '<i class="fa-solid fa-trash-can"></i> 不可を解除（空欄に戻す）';
+                    }
+                });
+            });
+
+            panelBtnEdit.addEventListener('click', () => {
+                if (!currentSelectedSlot) return;
+                const status = currentSelectedSlot.getAttribute('data-status');
+                const datetime = currentSelectedSlot.getAttribute('data-datetime');
+                const advisor = currentSelectedSlot.getAttribute('data-advisor');
+                
+                switchToEditMode(false, datetime, advisor);
+                
+                formStatus.value = status;
+                formContent.value = currentSelectedSlot.getAttribute('data-content') || '';
+                formLocation.value = currentSelectedSlot.getAttribute('data-location') || '';
+                
+                const studentName = currentSelectedSlot.getAttribute('data-student') || '';
+                const studentId = currentSelectedSlot.getAttribute('data-student-id') || '';
+                formStudent.value = studentName ? `${studentName} (${studentId})` : '';
+                
+                toggleStudentField(status);
+            });
+
+            function switchToViewMode() {
+                viewModeContainer.style.display = 'flex';
+                editModeContainer.style.display = 'none';
+            }
+
+            function switchToEditMode(isNewRegistration, datetime, advisor) {
+                viewModeContainer.style.display = 'none';
+                editModeContainer.style.display = 'flex';
+
+                formDatetime.value = datetime;
+                formAdvisor.value = advisor;
+
+                if (isNewRegistration) {
+                    formPanelTitle.textContent = '新規予約枠の登録';
+                    formStatus.value = 'empty';
+                    formContent.value = '';
+                    formLocation.value = '';
+                    formStudent.value = '';
+                    toggleStudentField('empty');
+                } else {
+                    formPanelTitle.textContent = '登録内容の編集';
+                }
+            }
+
+            formStatus.addEventListener('change', (e) => {
+                toggleStudentField(e.target.value);
+            });
+
+            function toggleStudentField(status) {
+                if (status === 'booked' || status === 'waiting') {
+                    formStudentGroup.style.display = 'flex';
+                } else {
+                    formStudentGroup.style.display = 'none';
+                }
+            }
+
+            formBtnCancel.addEventListener('click', () => {
+                if (currentSelectedSlot && currentSelectedSlot.getAttribute('data-status') === 'empty') {
+                    infoPanelTitle.textContent = '選択中の予約詳細';
+                    detailStatus.textContent = '未登録 (空欄)';
+                    detailStatus.className = 'status-badge status-empty';
+                    detailDatetime.textContent = currentSelectedSlot.getAttribute('data-datetime');
+                    detailContent.textContent = 'ー';
+                    detailLocation.textContent = 'ー';
+                    detailAdvisor.textContent = currentSelectedSlot.getAttribute('data-advisor');
+                    detailStudentBlock.style.display = 'none';
+                    panelBtnEdit.style.display = 'none';
+                    switchToViewMode();
+                } else {
+                    switchToViewMode();
+                }
+            });
+
+            formBtnSave.addEventListener('click', () => {
+                alert('変更内容をスケジュールに保存しました。');
+                switchToViewMode();
+            });
+
+            panelBtnDelete.addEventListener('click', () => {
+                alert('処理を行いました。');
+            });
+        });
+    </script>
+</body>
+
+</html>

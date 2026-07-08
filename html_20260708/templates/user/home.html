@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ホーム - 学生ー</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+
+        .container {
+            padding: 15px;
+        }
+
+        /* ボタン */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 20px;
+            border-radius: 12px;
+            border: none;
+            margin-bottom: 15px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .btn-primary {
+            background-color: #8cd1f5;
+            color: #1e5c80;
+        }
+
+        .btn-success {
+            background-color: #b7efa7;
+            color: #2e661e;
+        }
+
+        .btn-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .btn-desc {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .btn-icon {
+            font-size: 2rem;
+        }
+
+        /* セクション・カード */
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .more-link {
+            font-size: 0.8rem;
+            color: #4ea9df;
+            text-decoration: none;
+        }
+
+        /* 予約カード */
+        .reservation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .cal-box {
+            background: #e6f4fc;
+            border: 1px solid #4ea9df;
+            border-radius: 8px;
+            width: 50px;
+            text-align: center;
+            padding: 4px 0;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: #bce5fb;
+            color: #1a608a;
+        }
+
+        .res-details {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.85rem;
+        }
+
+        /* モーダル用CSS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>キャリアセンター</h1>
+        <a href="mypage.html" style="color: white; text-decoration: none; display: flex; align-items: center;">
+            <span class="material-icons">account_circle</span>
+        </a>
+    </header>
+
+    <main class="container">
+        <h2 style="font-size: 1.2rem; margin-bottom: 15px;">ようこそ！ 東京 電子 さん</h2>
+
+        <a href="reserve/reserve_form.html" class="btn btn-primary">
+            <div>
+                <div class="btn-title">新規予約</div>
+                <div class="btn-desc">相談の予約をする</div>
+            </div>
+            <span class="material-icons btn-icon">calendar_month</span>
+        </a>
+
+        <a href="check.html" class="btn btn-success">
+            <div>
+                <div class="btn-title">予約確認</div>
+                <div class="btn-desc">予約の確認・変更・キャンセル</div>
+            </div>
+            <span class="material-icons btn-icon">assignment_turned_in</span>
+        </a>
+
+        <section class="section-card">
+            <div class="section-header">
+                <span>お知らせ</span>
+                <a href="info.html" class="more-link">もっと見る ＞</a>
+            </div>
+            <div style="font-size: 0.9rem;">
+                <p style="padding: 5px 0;">・4月の就職相談予約を開始しました</p>
+                <p style="padding: 5px 0;">・GW期間中の営業日について</p>
+            </div>
+        </section>
+
+        <h3 style="margin-bottom: 10px;">直近の予約状況</h3>
+        <div class="reservation-card"
+            onclick="openModal('就職相談（個別）', '日時: 4月10日(水) 15:00～16:00<br>場所: 2号館13階<br>担当: 東京A子')">
+            <div class="cal-box">
+                <div style="font-size: 0.7rem; background:#4ea9df; color:white;">4/10</div>
+                <div style="font-weight:bold;">水</div>
+            </div>
+            <div class="status-badge">予約済み</div>
+            <div class="res-details">
+                <strong>就職相談（個別）</strong><br>
+                <small>15:00～16:00 / 東京A子</small>
+            </div>
+        </div>
+
+        <!-- 新規追加：予約申請中・予約受理セクション -->
+        <h3 style="margin-bottom: 10px;">現在の予約状態</h3>
+
+        <!-- 予約申請中 -->
+        <section class="section-card" style="padding: 10px;">
+            <div class="section-header" style="font-size: 0.9rem; margin-bottom: 5px;">
+                <span>予約申請中</span>
+            </div>
+            <div class="reservation-card" style="margin-bottom: 0; background: #fffaf0; border: 1px solid #ffe8cc;">
+                <div class="status-badge" style="background: #ffd8a8; color: #d9480f;">申請中</div>
+                <div class="res-details">
+                    <strong>履歴書添削</strong><br>
+                    <small>4月15日(月) 10:00～</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- 予約受理（確定） -->
+        <section class="section-card" style="padding: 10px;">
+            <div class="section-header" style="font-size: 0.9rem; margin-bottom: 5px;">
+                <span>予約受理済み</span>
+            </div>
+            <div class="reservation-card" style="margin-bottom: 0; background: #f0fff4; border: 1px solid #b2f2bb;"
+                onclick="openModal('面接練習', '日時: 4月12日(金) 14:00～15:00<br>場所: キャリアセンター相談室<br>担当: 東京B郎')">
+                <div class="status-badge" style="background: #b2f2bb; color: #2b8a3e;">受理済み</div>
+                <div class="res-details">
+                    <strong>面接練習</strong><br>
+                    <small>4月12日(金) 14:00～</small>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="material-icons close-btn" onclick="closeModal()">close</span>
+            <h2 id="modal-title" style="margin-bottom:15px;"></h2>
+            <p id="modal-body" style="color: #444; line-height: 1.6;"></p>
+            <button class="btn btn-primary" style="margin-top:20px; padding:10px; justify-content:center;"
+                onclick="closeModal()">閉じる</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item active"><span class="material-icons">home</span><span>ホーム</span></a>
+        <a href="info.html" class="nav-item"><span class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="check.html" class="nav-item"><span class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+
+    <script>
+        function openModal(title, body) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    </script>
+</body>
+
+</html>

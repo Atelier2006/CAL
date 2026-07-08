@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>お知らせ - 学生ー</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+
+        .container { padding: 15px; }
+        .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
+        .btn { border: none; background: #4ea9df; border-radius: 8px; padding: 0 15px; color: white; cursor: pointer; }
+
+        /* お知らせカード */
+        .notice-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); cursor: pointer; }
+        .date-badge { background: #e6f4fc; border: 1px solid #4ea9df; border-radius: 8px; width: 50px; text-align: center; padding: 4px 0; flex-shrink: 0; }
+        .card-content { flex: 1; min-width: 0; }
+        .card-title { font-size: 0.95rem; font-weight: bold; line-height: 1.4; word-break: break-all; }
+
+        /* モーダル用CSS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; position: relative; }
+        .close-btn { position: absolute; top: 10px; right: 10px; cursor: pointer; color: #666; }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>お知らせ</h1>
+        <a href="mypage.html" style="color: white; text-decoration: none; display: flex; align-items: center;">
+            <span class="material-icons">account_circle</span>
+        </a>
+    </header>
+
+    <main class="container">
+        <div class="search-box">
+            <input type="text" placeholder="キーワードで検索">
+            <button class="btn"><span class="material-icons">filter_list</span></button>
+        </div>
+
+        <div class="notice-card" onclick="openModal('重要', 'ゴールデンウィーク期間中の窓口営業について', 'GW期間中、キャリアセンター窓口は完全閉室となります。証明書発行などの手続きは余裕を持って行ってください。')">
+            <div class="date-badge"><div style="font-weight:bold;">20</div><div style="font-size:0.7rem;">月</div></div>
+            <div class="card-content">
+                <div style="color:#d32f2f; font-size:0.7rem; font-weight:bold;">重要</div>
+                <div class="card-title">ゴールデンウィーク期間中の窓口営業について</div>
+            </div>
+        </div>
+
+        <div class="notice-card" onclick="openModal('お知らせ', '4月実施の自己分析セミナーの予約受付中', '自己分析セミナーの予約を開始しました。先着順となりますので、マイページまたは予約管理からお早めに手続きください。')">
+            <div class="date-badge"><div style="font-weight:bold;">18</div><div style="font-size:0.7rem;">木</div></div>
+            <div class="card-content">
+                <div style="color:#2e7d32; font-size:0.7rem; font-weight:bold;">お知らせ</div>
+                <div class="card-title">4月実施の自己分析セミナーの予約受付中</div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="material-icons close-btn" onclick="closeModal()">close</span>
+            <div id="modal-category" style="font-size:0.8rem; color:#999; margin-bottom:5px;"></div>
+            <h2 id="modal-title" style="margin-bottom:15px;"></h2>
+            <p id="modal-body" style="color: #444; line-height: 1.6;"></p>
+            <button class="btn" style="width:100%; margin-top:20px; padding:10px;" onclick="closeModal()">閉じる</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="material-icons">home</span><span>ホーム</span></a>
+        <a href="info.html" class="nav-item active"><span class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="check.html" class="nav-item"><span class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+
+    <script>
+        function openModal(category, title, body) {
+            document.getElementById('modal-category').innerText = category;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = body;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    </script>
+</body>
+</html>

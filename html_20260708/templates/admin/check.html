@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約管理 - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        body { padding-bottom: 80px; }
+        .utility-area { padding: 15px; }
+        .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
+        .action-btns { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn-icon-box { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 12px; border-radius: 8px; border: none; cursor: pointer; color: white; font-weight: bold; }
+        .btn-filter { background-color: #4ea9df; }
+        .btn-new { background-color: #5bbd5a; }
+
+        .tabs { display: flex; background: white; border-radius: 8px; border: 1px solid #ddd; overflow: hidden; margin-bottom: 15px; }
+        .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 0.8rem; cursor: pointer; color: #666; }
+        .tab.active { background: #4ea9df; color: white; font-weight: bold; }
+
+        .container { padding: 0 15px; }
+        .res-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); cursor: pointer; }
+
+        .date-box { width: 50px; border: 1px solid #4ea9df; border-radius: 8px; overflow: hidden; flex-shrink: 0; text-align: center; background: white; }
+        .date-top { background: #4ea9df; color: white; font-size: 0.7rem; padding: 2px 0; }
+        .date-bottom { font-weight: bold; font-size: 1rem; padding: 4px 0; }
+
+        .status { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; }
+        .status-done { background: #bce5fb; color: #1a608a; }
+        .status-cancel { background: #eee; color: #666; }
+        .status-pending { background: #fff3bf; color: #d9480f; } /* 申請中の色 */
+        
+        .details { flex: 1; font-size: 0.9rem; }
+
+        /* モーダル */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>予約管理</h1>
+        <a href="mypage.html" style="color:white;"><span class="material-icons">account_circle</span></a>
+    </header>
+
+    <div class="utility-area">
+        <div class="search-container">
+            <input type="text" placeholder="キーワード検索">
+        </div>
+        <div class="action-btns">
+            <button class="btn-icon-box btn-filter"><span class="material-icons">filter_list</span>絞り込み</button>
+            <a href="reserve/reserve_form.html" class="btn-icon-box btn-new" style="text-decoration: none;">
+                <span class="material-icons">add_circle</span>新規予約
+            </a>
+        </div>
+        <div class="tabs" id="tabs">
+            <div class="tab active" data-filter="all">すべて</div>
+            <div class="tab" data-filter="done">予約済み</div>
+            <div class="tab" data-filter="cancel">キャンセル</div>
+            <div class="tab" data-filter="pending">申請中</div>
+        </div>
+    </div>
+
+    <main class="container" id="list"></main>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title" style="margin-bottom:15px;"></h2>
+            <p id="modal-body" style="color: #444; line-height: 1.6;"></p>
+            <button class="btn-icon-box btn-filter" style="margin-top:20px; width:100%;" onclick="closeModal()">閉じる</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="material-icons">home</span>ホーム</a>
+        <a href="info.html" class="nav-item"><span class="material-icons">mail</span>お知らせ</a>
+        <a href="check.html" class="nav-item active"><span class="material-icons">assignment</span>予約管理</a>
+    </nav>
+    
+    <script>
+        const reservations = [
+            { top: '4/10', day: '水', status: '予約済み', label: 'done', title: '就職相談（個別）', time: '15:00', place: '2号館13階 / 東京A子' },
+            { top: '4/15', day: '月', status: '申請中', label: 'pending', title: '履歴書添削', time: '10:00', place: 'オンライン' },
+            { top: '4/28', day: '木', status: 'キャンセル', label: 'cancel', title: '業界研究相談', time: '16:00', place: '3号館 / 東京B郎' }
+        ];
+
+        function render(filter) {
+            const list = document.getElementById('list');
+            list.innerHTML = '';
+            reservations.filter(r => filter === 'all' || r.label === filter).forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'res-card';
+                card.onclick = () => openModal(r.title, `日時: ${r.top}(${r.day}) ${r.time}<br>場所: ${r.place}<br>状態: ${r.status}`);
+                card.innerHTML = `
+                    <div class="date-box">
+                        <div class="date-top">${r.top}</div>
+                        <div class="date-bottom">${r.day}</div>
+                    </div>
+                    <div class="status ${'status-' + r.label}">${r.status}</div>
+                    <div class="details">
+                        <strong>${r.title} ${r.time}</strong><br>${r.place}
+                    </div>
+                    <span class="material-icons" style="color:#4ea9df;">chevron_right</span>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function openModal(title, body) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                render(e.target.dataset.filter);
+            });
+        });
+
+        render('all');
+    </script>
+</body>
+</html>

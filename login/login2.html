@@ -1,0 +1,259 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- <link rel="stylesheet" href="css/reset.min.css" /> -->
+    <style>
+        /* --- 共通の基本スタイル --- */
+        /* 1. 全要素に box-sizing: border-box; を適用 */
+        * {
+            box-sizing: border-box;
+        }
+        /* 全体のリセットとベース設定 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #b2e0ff;
+            box-sizing: border-box;
+            /* 全体に適用 */
+        }
+
+        /* スマホ画面の枠 */
+        .phone-screen {
+            width: 100%;
+            max-width: 375px;
+            height: 100vh;
+            max-height: 667px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-bottom: 1.25rem;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 0.9rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.3125rem;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* --- ログイン・新規作成のコンテナスタイル (共通化) --- */
+
+        .login-container,
+        .register-container {
+            background-color: #fff;
+            padding: 1.5625rem;
+            /* 25px -> 1.5625rem */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 350px;
+            width: 100%;
+            text-align: center;
+        }
+
+
+        /* ------------------------------------ */
+        /* カスタムエラーメッセージのスタイル */
+        /* ------------------------------------ */
+        .error-message {
+            color: #dc143c;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+            display: none;
+            /* 初期状態では非表示 */
+        }
+
+        /* エラーがある場合に表示 */
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        /* エラーがある場合の入力欄の枠線 */
+        .form-group.error input {
+            border-color: #dc143c;
+        }
+
+        /* --- 共通のボタン スタイル --- */
+        button {
+            width: 100%;
+            padding: 0.625rem;
+            /* 10px -> 0.625rem */
+            background-color: #43afe2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            /* 16px -> 1rem */
+            margin-top: 0.9375rem;
+            /* 15px -> 0.9375rem */
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #43afe2;
+        }
+
+        .S9gUrf-YoZ4jf {
+            border: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>管理者ログイン</h2>
+        <p><a href="/login">戻る</a></p>
+        <!-- <form id="login-form" action="/login" method="post" novalidate> -->
+        <form id="login-form" action="login_process.php" method="post" novalidate>
+            <div class="form-group">
+                <label for="username">ユーザー名 / メールアドレス</label>
+                <input type="text" id="username" name="display_name" required>
+                <p id="username-error" class="error-message"></p>
+            </div>
+            <div class="form-group">
+                <label for="password">パスワード</label>
+                <input type="password" id="password" name="password" required>
+                <p id="password-error" class="error-message"></p>
+            </div>
+            <button type="submit">ログイン</button>
+        </form>
+    <!-- Google Login 初期化 -->
+    <div id="g_id_onload"
+        data-client_id="925030125877-fm67bqs95umiksc4kgne98tpkhvakjtb.apps.googleusercontent.com"
+        data-callback="handleCredentialResponse">
+    </div>
+
+    <!-- ログインボタン -->
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <hr>
+
+    <!-- 結果表示 -->
+    <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function (event) {
+            // フォームの送信を一旦停止
+            event.preventDefault();
+
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            let isValid = true;
+
+            // --- ユーザー名/メールアドレスのバリデーション ---
+            if (usernameInput.value.trim() === '') {
+                // エラーメッセージを設定
+                setFieldError(usernameInput, 'ユーザー名またはメールアドレスを入力してください。');
+                isValid = false;
+            } else {
+                clearFieldError(usernameInput);
+            }
+
+            // --- パスワードのバリデーション ---
+            if (passwordInput.value.trim() === '') {
+                // エラーメッセージを設定
+                setFieldError(passwordInput, 'パスワードを入力してください。');
+                isValid = false;
+            } else {
+                clearFieldError(passwordInput);
+            }
+
+            // すべてのフィールドが有効であればフォームを送信
+            if (isValid) {
+                // 実際のログイン処理をここに記述
+                alert('ログイン情報が検証されました。');
+                // event.target.submit(); // 実際のフォーム送信を行う場合はコメント解除
+            }
+        });
+
+        /**
+         * エラーメッセージを表示し、フォームグループにエラークラスを設定する
+         * @param {HTMLElement} inputElement - 入力要素
+         * @param {string} message - 表示するエラーメッセージ
+         */
+        function setFieldError(inputElement, message) {
+            const formGroup = inputElement.closest('.form-group');
+            const errorElement = document.getElementById(inputElement.id + '-error');
+
+            formGroup.classList.add('error');
+            errorElement.textContent = message;
+        }
+
+        /**
+         * エラーメッセージを非表示にし、フォームグループのエラークラスを削除する
+         * @param {HTMLElement} inputElement - 入力要素
+         */
+        function clearFieldError(inputElement) {
+            const formGroup = inputElement.closest('.form-group');
+            const errorElement = document.getElementById(inputElement.id + '-error');
+
+            formGroup.classList.remove('error');
+            errorElement.textContent = '';
+        }
+
+        // リアルタイムでエラーをクリアする処理 (ユーザーが入力し始めたら)
+        document.getElementById('username').addEventListener('input', function () {
+            clearFieldError(this);
+        });
+        document.getElementById('password').addEventListener('input', function () {
+            clearFieldError(this);
+        });
+
+        async function handleCredentialResponse(response) {
+            const res = await fetch("/login2", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    credential: response.credential
+                })
+            });
+            const data = await res.json();
+            const resultDiv = document.getElementById("result");
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <h2>ログイン成功</h2>
+                    <img src="${data.picture}" width="100">
+                    <p>名前: ${data.name}</p>
+                    <p>Email: ${data.email}</p>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p>ログイン失敗</p>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

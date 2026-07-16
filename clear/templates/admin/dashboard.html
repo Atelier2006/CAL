@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ダッシュボード - キャリアセンター管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        .card-title { display:flex; align-items:center; gap:8px; font-weight:bold; color:#374151; margin-bottom:12px; }
+        .card-title i { color:#1e73be; }
+        .notice-item { display:flex; justify-content:space-between; padding:8px 4px; border-bottom:1px solid #f9fafb;
+                       text-decoration:none; color:inherit; font-size:12px; }
+        .notice-date { color:#9ca3af; margin-right:8px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i class="fa-solid fa-hotel"></i><span>キャリアセンター管理画面</span></div>
+        <div class="user-menu"><div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <span>{{ current_user.name }}</span>
+            <a href="{{ url_for('logout') }}" style="color:#fff; margin-left:8px;"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </header>
+    <div class="app-container">
+        {% include 'admin/_sidebar.html' %}
+        <main>
+            {% with msgs = get_flashed_messages() %}{% if msgs %}
+              {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+            {% endif %}{% endwith %}
+
+            <div class="stats-grid">
+                {% set cards = [
+                    ('総予約数', stats.total, '#2563eb', '#bfdbfe', 'fa-regular fa-calendar'),
+                    ('予約済み', stats.confirmed, '#1e73be', '#93c5fd', 'fa-solid fa-circle-check'),
+                    ('申請中', stats.pending, '#f97316', '#fed7aa', 'fa-solid fa-clock'),
+                    ('キャンセル', stats.cancelled, '#9ca3af', '#d1d5db', 'fa-solid fa-circle-xmark'),
+                    ('公開中お知らせ', stats.announcements, '#0891b2', '#a5f3fc', 'fa-solid fa-bullhorn')] %}
+                {% for label,num,color,bd,icon in cards %}
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color:{{ bd }}; color:{{ color }};"><i class="{{ icon }}"></i></div>
+                    <div style="text-align:right;">
+                        <p class="label">{{ label }}</p>
+                        <p class="number" style="color:{{ color }};">{{ num }}<span class="unit">件</span></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="main-grid">
+                <div class="card-layout">
+                    <div class="card-title"><i class="fa-regular fa-calendar-days"></i><span>予約一覧（最新10件）</span></div>
+                    <table class="admin-table">
+                        <thead><tr><th>日程</th><th>相談内容 / 学生</th><th>相談員</th><th style="text-align:center;">状態</th></tr></thead>
+                        <tbody>
+                        {% set st = {'confirmed':('予約済み','status-success'),'pending':('申請中','status-warning'),
+                                     'cancelled':('キャンセル','status-danger'),'rejected':('却下','status-danger')} %}
+                        {% for r in reservations %}
+                            <tr>
+                                <td>{{ r.date }}<br><span style="color:#9ca3af;">{{ r.slot }}</span></td>
+                                <td><strong>{{ r.content }}</strong><br><span style="color:#6b7280;">{{ r.sname }}</span></td>
+                                <td>{{ r.cname or 'ー' }}</td>
+                                <td style="text-align:center;"><span class="status-badge {{ st[r.status][1] }}">{{ st[r.status][0] }}</span></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" style="text-align:center; color:#9ca3af;">予約はありません</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-layout">
+                    <div class="card-title"><i class="fa-solid fa-bullhorn"></i><span>最近のお知らせ</span></div>
+                    {% for a in announcements %}
+                    <a href="{{ url_for('admin_notice') }}" class="notice-item">
+                        <span><span class="notice-date">{{ a.publish_date }}</span>{{ a.title }}</span>
+                        <span class="notice-tag tag-{{ a.category }}">{{ a.category }}</span>
+                    </a>
+                    {% else %}<p style="color:#9ca3af; font-size:12px;">お知らせはありません</p>{% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

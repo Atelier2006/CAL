@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約管理 - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body { padding-bottom: 80px; }
+        .utility-area { padding: 15px; }
+        .search-container { display:flex; gap:8px; margin-bottom:15px; }
+        input[type="text"] { flex:1; padding:12px; border-radius:8px; border:1px solid #ccc; font-size:1rem; }
+        .search-container button { border:none; background:#4ea9df; color:#fff; border-radius:8px; padding:0 15px; cursor:pointer; }
+        .action-btns { display:flex; gap:8px; margin-bottom:15px; }
+        .btn-new { flex:1; display:flex; align-items:center; justify-content:center; gap:4px; padding:12px;
+                   border-radius:8px; border:none; cursor:pointer; color:#fff; font-weight:bold; background:#5bbd5a; text-decoration:none; }
+        .tabs { display:flex; background:#fff; border-radius:8px; border:1px solid #ddd; overflow:hidden; margin-bottom:15px; }
+        .tab { flex:1; text-align:center; padding:10px 0; font-size:.78rem; color:#666; text-decoration:none; }
+        .tab.active { background:#4ea9df; color:#fff; font-weight:bold; }
+        .container { padding:0 15px; }
+        .res-card { background:#fff; border-radius:12px; padding:12px; margin-bottom:12px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,.05); }
+        .date-box { width:54px; border:1px solid #4ea9df; border-radius:8px; overflow:hidden; flex-shrink:0; text-align:center; }
+        .date-top { background:#4ea9df; color:#fff; font-size:.7rem; padding:2px 0; }
+        .date-bottom { font-weight:bold; font-size:.9rem; padding:4px 0; }
+        .status { padding:4px 8px; border-radius:6px; font-size:.7rem; font-weight:bold; white-space:nowrap; }
+        .status-confirmed { background:#bce5fb; color:#1a608a; }
+        .status-pending { background:#fff3bf; color:#d9480f; }
+        .status-cancelled, .status-rejected { background:#eee; color:#666; }
+        .details { flex:1; font-size:.85rem; min-width:0; }
+        .act { display:flex; flex-direction:column; gap:6px; }
+        .act button, .act a { font-size:.72rem; padding:6px 8px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; text-decoration:none; color:#333; text-align:center; }
+        .act .cancel { color:#d9480f; border-color:#ffd8a8; }
+        .act .rebook { color:#2e7d32; border-color:#b2f2bb; }
+        .flash { background:#fff3bf; color:#8a6d00; padding:10px 14px; border-radius:8px; margin:0 15px 12px; font-size:.85rem; }
+        .empty { color:#999; text-align:center; padding:30px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>予約管理</h1>
+        <a href="{{ url_for('user_mypage') }}" style="color:white;"><span class="material-icons">account_circle</span></a>
+    </header>
+
+    {% with msgs = get_flashed_messages() %}{% if msgs %}
+      {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+    {% endif %}{% endwith %}
+
+    <div class="utility-area">
+        <form class="search-container" method="get" action="{{ url_for('user_check') }}">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <input type="text" name="q" value="{{ q }}" placeholder="日程・相談内容で検索">
+            <button type="submit"><span class="material-icons">search</span></button>
+        </form>
+        <div class="action-btns">
+            <a href="{{ url_for('user_reserve_c') }}" class="btn-new"><span class="material-icons">add_circle</span>新規予約</a>
+        </div>
+        {% set tabs = [('all','すべて'),('done','予約済み'),('pending','申請中'),('cancel','キャンセル'),('past','過去の予約')] %}
+        <div class="tabs">
+            {% for key,label in tabs %}
+            <a href="{{ url_for('user_check', tab=key, q=q) }}" class="tab {{ 'active' if tab==key }}">{{ label }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <main class="container">
+        {% set labels = {'confirmed':'予約済み','pending':'申請中','cancelled':'キャンセル','rejected':'却下'} %}
+        {% for r in items %}
+        <div class="res-card">
+            <div class="date-box">
+                <div class="date-top">{{ r.date[5:] }}</div>
+                <div class="date-bottom">{{ r.slot }}</div>
+            </div>
+            <div class="status status-{{ r.status }}">{{ labels[r.status] }}</div>
+            <div class="details">
+                <strong>{{ r.content }}</strong><br>
+                <small>{{ r.date }} / {{ r.location or '場所未定' }} / {{ r.cname or '担当未定' }}</small>
+            </div>
+            <div class="act">
+                {% if r.status in ('pending','confirmed') and not r.is_past %}
+                <form method="post" action="{{ url_for('user_cancel', rid=r.id) }}"
+                      onsubmit="return confirm('この予約をキャンセルしますか？');">
+                    <button class="cancel" type="submit">キャンセル</button>
+                </form>
+                {% elif r.status in ('cancelled','rejected') %}
+                <a class="rebook" href="{{ url_for('user_reserve_c') }}">再予約する</a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p class="empty">該当する予約はありません</p>
+        {% endfor %}
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="{{ url_for('user_home') }}" class="nav-item"><span class="material-icons">home</span><span>ホーム</span></a>
+        <a href="{{ url_for('user_info') }}" class="nav-item"><span class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="{{ url_for('user_check') }}" class="nav-item active"><span class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+</body>
+</html>

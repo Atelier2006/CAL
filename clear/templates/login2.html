@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者ログイン - キャリアセンター</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #cfe3f5; min-height: 100vh;
+               display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .card { background: #fff; width: 100%; max-width: 360px; padding: 28px 24px;
+                border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.12); text-align: center; }
+        h1 { font-size: 1.2rem; color: #005bac; margin-bottom: 20px; }
+        .g_id_signin { display: flex; justify-content: center; margin: 12px 0; }
+        hr { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+        button { width: 100%; padding: 11px; border-radius: 8px; font-size: 1rem;
+                 border: none; background: #005bac; color: #fff; cursor: pointer; }
+        button:hover { background: #1e73be; }
+        .back { display: inline-block; margin-top: 16px; font-size: .8rem; color: #005bac; }
+        #result { color: #dc143c; font-size: .85rem; margin-top: 10px; }
+        .note { font-size: .7rem; color: #999; margin-top: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>管理者ログイン</h1>
+
+        <div id="g_id_onload"
+             data-client_id="925030125877-fm67bqs95umiksc4kgne98tpkhvakjtb.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"></div>
+        <div class="g_id_signin" data-type="standard"></div>
+        <div id="result"></div>
+
+        <hr>
+        <form action="/dev-login" method="post">
+            <input type="hidden" name="user_id" value="admin">
+            <button type="submit">デモ用 管理者ログイン</button>
+        </form>
+
+        <a class="back" href="/">← 学生ログインへ戻る</a>
+        <p class="note">※管理者用Googleアカウントでログインしてください。</p>
+    </div>
+
+    <script>
+        async function handleCredentialResponse(response) {
+            const res = await fetch("/login2", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ credential: response.credential })
+            });
+            const data = await res.json();
+            if (data.success) { location.href = data.redirect; }
+            else { document.getElementById("result").textContent = data.message || "ログイン失敗"; }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約管理 - キャリアセンター管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        .approve-form { display:flex; gap:6px; align-items:center; }
+        .approve-form input { height:32px; width:120px; }
+        .approve-form .form-control { height:32px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i class="fa-solid fa-hotel"></i><span>予約管理画面</span></div>
+        <div class="user-menu"><div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <span>{{ current_user.name }}</span>
+            <a href="{{ url_for('logout') }}" style="color:#fff; margin-left:8px;"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </header>
+    <div class="app-container">
+        {% include 'admin/_sidebar.html' %}
+        <main>
+            <div class="page-title"><h1>予約管理</h1><p>申請中の予約を承認・却下できます（承認時は場所の入力が必須）</p></div>
+            {% with msgs = get_flashed_messages() %}{% if msgs %}
+              {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+            {% endif %}{% endwith %}
+
+            <div class="card-layout">
+                <table class="admin-table">
+                    <thead><tr>
+                        <th>日程</th><th>学生</th><th>相談員</th><th>相談内容</th>
+                        <th style="text-align:center;">状態</th><th style="text-align:center; width:280px;">操作</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for r in reservations %}
+                        <tr>
+                            <td>{{ r.date }}<br><span style="color:#9ca3af;">{{ r.slot }}</span></td>
+                            <td><strong>{{ r.sname }}</strong><br><span style="color:#9ca3af; font-size:11px;">{{ r.sdept }}</span></td>
+                            <td>{{ r.cname or 'ー' }}</td>
+                            <td>{{ r.content }}{% if r.location %}<br><span style="color:#9ca3af; font-size:11px;">場所: {{ r.location }}</span>{% endif %}</td>
+                            <td style="text-align:center;">
+                                {% if r.status=='confirmed' %}<span class="status-badge status-success">予約済み</span>
+                                {% else %}<span class="status-badge status-warning">申請中</span>{% endif %}
+                            </td>
+                            <td style="text-align:center;">
+                                {% if r.status=='pending' %}
+                                <div class="approve-form">
+                                    <form method="post" action="{{ url_for('admin_approve', rid=r.id) }}" class="approve-form">
+                                        <input class="form-control" type="text" name="location" placeholder="場所(例:2号館13階)" required>
+                                        <button class="btn-primary" type="submit"><i class="fa-solid fa-check"></i>承認</button>
+                                    </form>
+                                    <form method="post" action="{{ url_for('admin_reject', rid=r.id) }}"
+                                          onsubmit="return confirm('この予約を却下しますか？');">
+                                        <button class="btn-secondary btn-danger" type="submit">却下</button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                <span style="color:#9ca3af; font-size:12px;">承認済み</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" style="text-align:center; color:#9ca3af;">予約はありません</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

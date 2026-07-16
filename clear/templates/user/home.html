@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ホーム - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body { padding-bottom: 80px; }
+        .container { padding: 15px; }
+        .flash { background:#fff3bf; color:#8a6d00; padding:10px 14px; border-radius:8px; margin-bottom:12px; font-size:.85rem; }
+        .btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:20px;
+               border-radius:12px; border:none; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,.05);
+               text-decoration:none; color:inherit; }
+        .btn-primary { background:#8cd1f5; color:#1e5c80; }
+        .btn-success { background:#b7efa7; color:#2e661e; }
+        .btn-job { background:#ffe1a8; color:#8a5a00; }
+        .btn-title { font-size:1.1rem; font-weight:bold; margin-bottom:4px; }
+        .btn-desc { font-size:.8rem; opacity:.8; }
+        .btn-icon { font-size:2rem; }
+        .section-card { background:#fff; border-radius:12px; padding:15px; box-shadow:0 2px 4px rgba(0,0,0,.05); margin-bottom:20px; }
+        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;
+                          border-bottom:1px solid #eee; padding-bottom:8px; font-weight:bold; }
+        .more-link { font-size:.8rem; color:#4ea9df; text-decoration:none; }
+        .reservation-card { background:#fff; border-radius:12px; padding:12px; margin-bottom:12px; display:flex;
+                            align-items:center; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,.05); }
+        .cal-box { background:#e6f4fc; border:1px solid #4ea9df; border-radius:8px; width:54px; text-align:center; padding:4px 0; flex-shrink:0; }
+        .status-badge { padding:4px 8px; border-radius:6px; font-size:.75rem; font-weight:bold; background:#bce5fb; color:#1a608a; }
+        .res-details { flex:1; min-width:0; font-size:.85rem; }
+        .empty { font-size:.85rem; color:#999; padding:8px 0; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>キャリアセンター</h1>
+        <a href="{{ url_for('user_mypage') }}" style="color:white; display:flex; align-items:center;">
+            <span class="material-icons">account_circle</span></a>
+    </header>
+
+    <main class="container">
+        {% with msgs = get_flashed_messages() %}{% if msgs %}
+          {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+        {% endif %}{% endwith %}
+
+        <h2 style="font-size:1.2rem; margin-bottom:15px;">ようこそ！ {{ current_user.name }} さん</h2>
+
+        <a href="{{ url_for('user_reserve_c') }}" class="btn btn-primary">
+            <div><div class="btn-title">新規予約</div><div class="btn-desc">相談の予約をする</div></div>
+            <span class="material-icons btn-icon">calendar_month</span>
+        </a>
+        <a href="{{ url_for('user_check') }}" class="btn btn-success">
+            <div><div class="btn-title">予約確認</div><div class="btn-desc">予約の確認・キャンセル・再予約</div></div>
+            <span class="material-icons btn-icon">assignment_turned_in</span>
+        </a>
+        <!-- 求人サイト遷移 (§6-2 当面は仮URL) -->
+        <a href="https://example.com/job-board" target="_blank" rel="noopener" class="btn btn-job">
+            <div><div class="btn-title">求人サイト</div><div class="btn-desc">学校の求人情報を見る（仮リンク）</div></div>
+            <span class="material-icons btn-icon">work</span>
+        </a>
+
+        <section class="section-card">
+            <div class="section-header">
+                <span>お知らせ</span>
+                <a href="{{ url_for('user_info') }}" class="more-link">もっと見る ＞</a>
+            </div>
+            <div style="font-size:.9rem;">
+                {% for a in announcements %}
+                  <p style="padding:5px 0;">・{{ a.title }}</p>
+                {% else %}
+                  <p class="empty">お知らせはありません</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <h3 style="margin-bottom:10px;">直近の予約（確定）</h3>
+        {% if upcoming %}
+        <div class="reservation-card">
+            <div class="cal-box">
+                <div style="font-size:.7rem; background:#4ea9df; color:white;">{{ upcoming.date[5:] }}</div>
+                <div style="font-weight:bold;">{{ upcoming.slot }}</div>
+            </div>
+            <div class="status-badge">確定</div>
+            <div class="res-details">
+                <strong>{{ upcoming.content }}</strong><br>
+                <small>{{ upcoming.location or '場所未定' }} / {{ upcoming.cname or '担当未定' }}</small>
+            </div>
+        </div>
+        {% else %}<p class="empty">確定済みの予約はありません</p>{% endif %}
+
+        <h3 style="margin:16px 0 10px;">申請中の予約</h3>
+        {% for p in pending %}
+        <div class="reservation-card" style="background:#fffaf0; border:1px solid #ffe8cc;">
+            <div class="status-badge" style="background:#ffd8a8; color:#d9480f;">申請中</div>
+            <div class="res-details"><strong>{{ p.content }}</strong><br>
+                <small>{{ p.date }} {{ p.slot }}</small></div>
+        </div>
+        {% else %}<p class="empty">申請中の予約はありません</p>{% endfor %}
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="{{ url_for('user_home') }}" class="nav-item active"><span class="material-icons">home</span><span>ホーム</span></a>
+        <a href="{{ url_for('user_info') }}" class="nav-item"><span class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="{{ url_for('user_check') }}" class="nav-item"><span class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+</body>
+</html>

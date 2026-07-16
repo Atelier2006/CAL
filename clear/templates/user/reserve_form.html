@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約フォーム - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body {
+            padding-bottom: 80px;
+        }
+
+        .container {
+            padding: 15px;
+        }
+
+        .form-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
+        }
+
+        h2 {
+            color: #4ea9df;
+            border-left: 4px solid #4ea9df;
+            padding-left: 10px;
+            font-size: 1.15rem;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: .9rem;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            background: #fafafa;
+        }
+
+        input[readonly] {
+            background: #eee;
+            color: #666;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4ea9df;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+
+        .flash {
+            background: #ffe3e3;
+            color: #c92a2a;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: .85rem;
+        }
+
+        .slot-info {
+            background: #e6f4fc;
+            border: 1px solid #bfe0f7;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: .9rem;
+            color: #1a608a;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>予約フォーム</h1>
+        <a href="{{ url_for('user_check') }}" style="color:white;"><span class="material-icons">close</span></a>
+    </header>
+
+    <div class="container">
+        {% with msgs = get_flashed_messages() %}{% if msgs %}
+        {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+        {% endif %}{% endwith %}
+
+        <div class="form-card">
+            <h2>予約内容の入力</h2>
+
+            {% if not sel_date or not sel_slot %}
+            <p style="color:#c92a2a;">予約枠が選択されていません。
+                <a href="{{ url_for('user_reserve_c') }}">カレンダーから選び直す</a>
+            </p>
+            {% else %}
+            <div class="slot-info">
+                <span class="material-icons" style="font-size:1rem; vertical-align:middle;">event</span>
+                {{ sel_date }} ／ {{ sel_slot }}
+            </div>
+            <form method="post" action="{{ url_for('user_reserve_form') }}">
+                <input type="hidden" name="date" value="{{ sel_date }}">
+                <input type="hidden" name="slot" value="{{ sel_slot }}">
+
+                <div class="form-group">
+                    <label>お名前（自動入力）</label>
+                    <input type="text" value="{{ current_user.name }}（{{ current_user.id }}）" readonly>
+                </div>
+                <div class="form-group">
+                    <label>学科・学年（自動入力）</label>
+                    <input type="text" value="{{ current_user.department }} {{ current_user.grade }}年" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="counselor_id">担当相談員（任意）</label>
+                    <select name="counselor_id" id="counselor_id">
+                        <option value="">指定なし（センターにお任せ）</option>
+                        {% for c in counselors %}
+                        <option value="{{ c.id }}">{{ c.name }}（{{ c.field }}）</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="purpose">使用用途</label>
+                    <select name="purpose" id="purpose" required onchange="toggleOther()">
+                        <option value="" disabled selected>選択してください</option>
+                        <option value="相談">相談</option>
+                        <option value="添削">添削</option>
+                        <option value="面接">面接</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="content">相談内容 / その他（「その他」選択時は必須）</label>
+                    <input type="text" name="content" id="content" placeholder="例: 学校推薦状の発行について">
+                </div>
+                <button type="submit" class="submit-btn">予約を申請する</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="{{ url_for('user_home') }}" class="nav-item"><span
+                class="material-icons">home</span><span>ホーム</span></a>
+        <a href="{{ url_for('user_info') }}" class="nav-item"><span
+                class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="{{ url_for('user_check') }}" class="nav-item active"><span
+                class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+
+    <script>
+        function toggleOther() {
+            const p = document.getElementById('purpose').value;
+            document.getElementById('content').required = (p === 'その他');
+        }
+    </script>
+</body>
+
+</html>

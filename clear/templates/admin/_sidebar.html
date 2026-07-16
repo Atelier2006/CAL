@@ -1,0 +1,10 @@
+<aside>
+    <nav>
+        {% set ep = request.endpoint %}
+        <a href="{{ url_for('admin_dashboard') }}"   class="{{ 'active' if ep=='admin_dashboard' }}"><i class="fa-solid fa-house"></i><span>ダッシュボード</span></a>
+        <a href="{{ url_for('admin_reservation') }}" class="{{ 'active' if ep in ('admin_reservation','admin_approve','admin_reject') }}"><i class="fa-solid fa-calendar-check"></i><span>予約管理</span></a>
+        <a href="{{ url_for('admin_notice') }}"      class="{{ 'active' if ep in ('admin_notice','admin_notice_save') }}"><i class="fa-solid fa-envelope"></i><span>お知らせ管理</span></a>
+        <a href="{{ url_for('admin_staff') }}"       class="{{ 'active' if ep in ('admin_staff','admin_staff_save') }}"><i class="fa-solid fa-user-tie"></i><span>相談員管理</span></a>
+        <a href="{{ url_for('admin_setting') }}"     class="{{ 'active' if ep=='admin_setting' }}"><i class="fa-solid fa-gear"></i><span>設定</span></a>
+    </nav>
+</aside>

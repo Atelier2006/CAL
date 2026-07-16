@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>マイページ - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body { padding-bottom: 70px; }
+        .container { padding: 15px; }
+        .profile-card { background:#fff; border-radius:12px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,.05); margin-bottom:20px; }
+        .profile-icon { font-size:4rem; color:#4ea9df; }
+        .next-card { background:#eef8ff; border:1px solid #bfe0f7; border-radius:12px; padding:14px; margin-bottom:20px; }
+        .next-card .lbl { font-size:.75rem; color:#1a608a; font-weight:bold; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+        .next-card .row { font-size:.9rem; color:#333; line-height:1.6; }
+        .menu-list { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 4px rgba(0,0,0,.05); margin-bottom:20px; }
+        .menu-item { display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee; text-decoration:none; color:#333; }
+        .menu-item:last-child { border-bottom:none; }
+        .menu-item .material-icons { margin-right:15px; color:#4ea9df; }
+        .menu-text { flex:1; font-weight:500; }
+        .menu-arrow { color:#ccc; }
+        .logout-btn { background:#fff; border-radius:12px; padding:15px; display:flex; align-items:center;
+                      justify-content:space-between; text-decoration:none; color:#666; box-shadow:0 2px 4px rgba(0,0,0,.05); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>マイページ</h1>
+        <a href="{{ url_for('user_mypage') }}" style="color:white; display:flex; align-items:center;">
+            <span class="material-icons">account_circle</span></a>
+    </header>
+
+    <main class="container">
+        <div class="profile-card">
+            <span class="material-icons profile-icon">account_circle</span>
+            <h2>{{ current_user.name }} さん</h2>
+            <p style="font-size:.9rem; color:#666; margin-top:5px;">学籍番号: {{ current_user.id }}</p>
+            <p style="font-size:.85rem; color:#888; margin-top:2px;">{{ current_user.department }} {{ current_user.grade }}年</p>
+        </div>
+
+        <!-- 次回の予約カード (作業指示書 B-4) -->
+        <div class="next-card">
+            <div class="lbl"><span class="material-icons" style="font-size:1rem;">event</span>次回の予約</div>
+            {% if nxt %}
+            <div class="row">
+                {{ nxt.date }}（{{ nxt.slot }}）<br>
+                {{ nxt.content }} / {{ nxt.location or '場所未定' }}<br>
+                担当: {{ nxt.cname or '未定' }}
+            </div>
+            {% else %}
+            <div class="row" style="color:#999;">確定済みの予約はありません</div>
+            {% endif %}
+        </div>
+
+        <div class="menu-list">
+            <a href="{{ url_for('user_check') }}" class="menu-item"><span class="material-icons">history</span><span class="menu-text">利用履歴</span><span class="material-icons menu-arrow">chevron_right</span></a>
+            <a href="{{ url_for('user_info') }}" class="menu-item"><span class="material-icons">mail</span><span class="menu-text">お知らせ</span><span class="material-icons menu-arrow">chevron_right</span></a>
+        </div>
+
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+            <span style="display:flex; align-items:center;"><span class="material-icons" style="margin-right:10px;">logout</span>ログアウト</span>
+            <span class="material-icons">chevron_right</span>
+        </a>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="{{ url_for('user_home') }}" class="nav-item"><span class="material-icons">home</span><span>ホーム</span></a>
+        <a href="{{ url_for('user_info') }}" class="nav-item"><span class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="{{ url_for('user_check') }}" class="nav-item"><span class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+</body>
+</html>

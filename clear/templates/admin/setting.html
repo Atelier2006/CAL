@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定 - キャリアセンター管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        .section-title { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:bold;
+            color:#1f2937; margin:0 0 18px; }
+        .section-title i { color:#005bac; }
+        .switch { position:relative; display:inline-block; width:44px; height:24px; }
+        .switch input { opacity:0; width:0; height:0; }
+        .slider { position:absolute; inset:0; background:#d1d5db; transition:.3s; border-radius:24px; cursor:pointer; }
+        .slider:before { content:""; position:absolute; height:18px; width:18px; left:3px; bottom:3px;
+            background:#fff; transition:.3s; border-radius:50%; }
+        input:checked + .slider { background:#005bac; }
+        input:checked + .slider:before { transform:translateX(20px); }
+        .prep { font-size:11px; color:#f97316; margin-left:8px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i class="fa-solid fa-hotel"></i><span>設定画面</span></div>
+        <div class="user-menu"><div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <span>{{ current_user.name }}</span>
+            <a href="{{ url_for('logout') }}" style="color:#fff; margin-left:8px;"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </header>
+    <div class="app-container">
+        {% include 'admin/_sidebar.html' %}
+        <main>
+            <div class="page-title"><h1>設定</h1><p>システムの基本設定を管理します（予約設定は予約ロジックに反映されます）</p></div>
+            {% with msgs = get_flashed_messages() %}{% if msgs %}
+              {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+            {% endif %}{% endwith %}
+
+            <form method="post" action="{{ url_for('admin_setting_save') }}" style="display:flex; flex-direction:column; gap:20px; max-width:720px;">
+                <div class="card-layout">
+                    <h3 class="section-title"><i class="fa-solid fa-circle-info"></i>基本情報</h3>
+                    <div class="form-row"><label>センター名</label><input class="form-control" type="text" name="center_name" value="{{ s.center_name }}"></div>
+                    <div class="form-row"><label>メールアドレス</label><input class="form-control" type="email" name="center_email" value="{{ s.center_email }}"></div>
+                    <div class="form-row"><label>電話番号</label><input class="form-control" type="text" name="center_tel" value="{{ s.center_tel }}"></div>
+                </div>
+
+                <div class="card-layout">
+                    <h3 class="section-title"><i class="fa-solid fa-calendar-days"></i>予約設定</h3>
+                    <div class="form-row"><label>受付開始（何日前から）</label>
+                        <input class="form-control" type="number" name="open_days" value="{{ s.open_days }}" style="max-width:120px;"><span>日前から</span></div>
+                    <div class="form-row"><label>受付締切（営業日）</label>
+                        <input class="form-control" type="number" name="deadline_days" value="{{ s.deadline_days }}" style="max-width:120px;"><span>営業日前まで</span></div>
+                    <div class="form-row"><label>1日の上限件数</label>
+                        <input class="form-control" type="number" name="daily_cap" value="{{ s.daily_cap }}" style="max-width:120px;"><span>件</span></div>
+                </div>
+
+                <div class="card-layout">
+                    <h3 class="section-title"><i class="fa-solid fa-bell"></i>通知設定 <span class="prep">（準備中 / フェーズ2）</span></h3>
+                    <div class="form-row"><label>メール通知</label>
+                        <label class="switch"><input type="checkbox" name="mail_notify" disabled {{ 'checked' if s.mail_notify=='1' }}><span class="slider"></span></label></div>
+                    <div class="form-row"><label>リマインド通知</label>
+                        <label class="switch"><input type="checkbox" name="remind_notify" disabled {{ 'checked' if s.remind_notify=='1' }}><span class="slider"></span></label></div>
+                </div>
+
+                <button class="btn-primary" type="submit" style="height:42px;"><i class="fa-solid fa-floppy-disk"></i> 変更を保存</button>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

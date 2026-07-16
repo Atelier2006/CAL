@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相談員管理 - キャリアセンター管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        .editor .form-control { margin-bottom:10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i class="fa-solid fa-hotel"></i><span>相談員管理画面</span></div>
+        <div class="user-menu"><div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <span>{{ current_user.name }}</span>
+            <a href="{{ url_for('logout') }}" style="color:#fff; margin-left:8px;"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </header>
+    <div class="app-container">
+        {% include 'admin/_sidebar.html' %}
+        <main>
+            <div class="page-title"><h1>相談員管理</h1><p>相談員情報の確認・登録・編集・休止設定ができます</p></div>
+            {% with msgs = get_flashed_messages() %}{% if msgs %}
+              {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+            {% endif %}{% endwith %}
+
+            <div class="stats-grid cols-4">
+                {% set cards = [
+                    ('登録相談員数', stats.total, '#2563eb', '#bfdbfe', 'fa-solid fa-user-tie'),
+                    ('本日の対応可能', stats.active, '#16a34a', '#bbf7d0', 'fa-solid fa-circle-check'),
+                    ('本日の予約件数', stats.today, '#f97316', '#fed7aa', 'fa-solid fa-calendar-day'),
+                    ('休止中', stats.paused, '#9ca3af', '#d1d5db', 'fa-solid fa-circle-pause')] %}
+                {% for label,num,color,bd,icon in cards %}
+                <div class="card-layout stats-card">
+                    <div class="icon-circle" style="border-color:{{ bd }}; color:{{ color }};"><i class="{{ icon }}"></i></div>
+                    <div style="text-align:right;"><p class="label">{{ label }}</p>
+                        <p class="number" style="color:{{ color }};">{{ num }}<span class="unit">名</span></p></div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="main-grid">
+                <div class="card-layout">
+                    <table class="admin-table">
+                        <thead><tr><th>相談員ID</th><th>氏名</th><th>相談分野</th><th>対応曜日</th><th style="text-align:center;">本日予約</th><th style="text-align:center;">状態</th><th style="text-align:center;">操作</th></tr></thead>
+                        <tbody>
+                        {% for c in counselors %}
+                            <tr>
+                                <td style="font-family:monospace;">{{ c.id }}</td>
+                                <td><strong>{{ c.name }}</strong></td>
+                                <td>{{ c.field }}</td>
+                                <td>{{ c.work_days }}</td>
+                                <td style="text-align:center;">{{ today_counts.get(c.id, 0) }}件</td>
+                                <td style="text-align:center;">
+                                    {% if c.status=='対応中' %}<span class="status-badge status-success">対応中</span>
+                                    {% else %}<span class="status-badge status-danger">休止中</span>{% endif %}
+                                </td>
+                                <td style="text-align:center;"><button class="btn-secondary" onclick='editC({{ c|tojson }})'>編集</button></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="7" style="text-align:center; color:#9ca3af;">相談員が登録されていません</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-layout editor">
+                    <div style="font-weight:bold; color:#374151; margin-bottom:12px;">
+                        <i class="fa-solid fa-user-plus" style="color:#1e73be;"></i> <span id="editor-title">相談員の新規登録</span>
+                    </div>
+                    <form method="post" action="{{ url_for('admin_staff_save') }}">
+                        <input type="hidden" name="id" id="c-id">
+                        <input class="form-control" type="text" name="name" id="c-name" placeholder="氏名" required>
+                        <input class="form-control" type="text" name="field" id="c-field" placeholder="相談分野（例:就職相談）">
+                        <input class="form-control" type="text" name="work_days" id="c-days" placeholder="対応曜日（例:月・水・金）">
+                        <input class="form-control" type="text" name="email" id="c-email" placeholder="メール">
+                        <input class="form-control" type="text" name="tel" id="c-tel" placeholder="電話">
+                        <select class="form-control" name="status" id="c-status">
+                            <option value="対応中">対応中</option><option value="休止中">休止中</option>
+                        </select>
+                        <div style="display:flex; gap:8px; margin-top:12px;">
+                            <button class="btn-secondary" type="button" onclick="resetC()">新規に戻す</button>
+                            <button class="btn-primary" type="submit" style="flex:1;"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+                        </div>
+                    </form>
+                    <p style="font-size:11px; color:#9ca3af; margin-top:12px;">
+                        ※対応中の相談員は学生の予約フォームで選択肢に表示されます。</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function editC(c) {
+            document.getElementById('editor-title').textContent = '編集 (' + c.id + ')';
+            document.getElementById('c-id').value = c.id;
+            document.getElementById('c-name').value = c.name || '';
+            document.getElementById('c-field').value = c.field || '';
+            document.getElementById('c-days').value = c.work_days || '';
+            document.getElementById('c-email').value = c.email || '';
+            document.getElementById('c-tel').value = c.tel || '';
+            document.getElementById('c-status').value = c.status || '対応中';
+            window.scrollTo(0, 0);
+        }
+        function resetC() {
+            document.getElementById('editor-title').textContent = '相談員の新規登録';
+            document.querySelector('.editor form').reset();
+            document.getElementById('c-id').value = '';
+        }
+    </script>
+</body>
+</html>

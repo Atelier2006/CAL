@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>お知らせ管理 - キャリアセンター管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common_a.css') }}">
+    <style>
+        .editor .form-control, .editor textarea { margin-bottom:10px; }
+        textarea.form-control { height:70px; padding:8px 12px; resize:vertical; }
+        .editor-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i class="fa-solid fa-hotel"></i><span>お知らせ管理画面</span></div>
+        <div class="user-menu"><div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <span>{{ current_user.name }}</span>
+            <a href="{{ url_for('logout') }}" style="color:#fff; margin-left:8px;"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </header>
+    <div class="app-container">
+        {% include 'admin/_sidebar.html' %}
+        <main>
+            <div class="page-title"><h1>お知らせ管理</h1><p>お知らせの作成・編集・削除ができます</p></div>
+            {% with msgs = get_flashed_messages() %}{% if msgs %}
+              {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+            {% endif %}{% endwith %}
+
+            <div class="main-grid">
+                <div class="card-layout">
+                    <table class="admin-table">
+                        <thead><tr><th>公開日</th><th>カテゴリ</th><th>タイトル</th><th>状態</th><th style="text-align:center;">操作</th></tr></thead>
+                        <tbody>
+                        {% for a in announcements %}
+                            <tr>
+                                <td>{{ a.publish_date }}</td>
+                                <td><span class="notice-tag tag-{{ a.category }}">{{ a.category }}</span></td>
+                                <td>{{ a.title }}</td>
+                                <td>
+                                    {% if a.status=='公開中' %}<span class="status-badge status-success">公開中</span>
+                                    {% elif a.status=='下書き' %}<span class="status-badge status-warning">下書き</span>
+                                    {% else %}<span class="status-badge status-danger">終了</span>{% endif %}
+                                </td>
+                                <td style="text-align:center; white-space:nowrap;">
+                                    <button class="btn-secondary" onclick='editNotice({{ a|tojson }})'>編集</button>
+                                    <form method="post" action="{{ url_for('admin_notice_delete', nid=a.id) }}"
+                                          style="display:inline;" onsubmit="return confirm('削除しますか？');">
+                                        <button class="btn-secondary btn-danger" type="submit">削除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5" style="text-align:center; color:#9ca3af;">お知らせはありません</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-layout editor">
+                    <div style="font-weight:bold; color:#374151; margin-bottom:12px;">
+                        <i class="fa-solid fa-pen" style="color:#1e73be;"></i> <span id="editor-title">新規作成</span>
+                    </div>
+                    <form method="post" action="{{ url_for('admin_notice_save') }}">
+                        <input type="hidden" name="id" id="f-id">
+                        <input class="form-control" type="text" name="title" id="f-title" placeholder="タイトル" required>
+                        <textarea class="form-control" name="content" id="f-content" placeholder="本文"></textarea>
+                        <div class="editor-grid">
+                            <select class="form-control" name="category" id="f-category">
+                                <option value="重要">重要</option><option value="イベント">イベント</option>
+                                <option value="その他" selected>その他</option>
+                            </select>
+                            <select class="form-control" name="status" id="f-status">
+                                <option value="公開中" selected>公開中</option><option value="下書き">下書き</option>
+                                <option value="終了">終了</option>
+                            </select>
+                            <input class="form-control" type="date" name="publish_date" id="f-publish">
+                            <input class="form-control" type="date" name="expiration_date" id="f-expire">
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:12px;">
+                            <button class="btn-secondary" type="button" onclick="resetForm()">新規に戻す</button>
+                            <button class="btn-primary" type="submit" style="flex:1;"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function editNotice(a) {
+            document.getElementById('editor-title').textContent = '編集 (ID:' + a.id + ')';
+            document.getElementById('f-id').value = a.id;
+            document.getElementById('f-title').value = a.title || '';
+            document.getElementById('f-content').value = a.content || '';
+            document.getElementById('f-category').value = a.category || 'その他';
+            document.getElementById('f-status').value = a.status || '公開中';
+            document.getElementById('f-publish').value = a.publish_date || '';
+            document.getElementById('f-expire').value = a.expiration_date || '';
+            window.scrollTo(0, 0);
+        }
+        function resetForm() {
+            document.getElementById('editor-title').textContent = '新規作成';
+            document.querySelector('.editor form').reset();
+            document.getElementById('f-id').value = '';
+        }
+    </script>
+</body>
+</html>

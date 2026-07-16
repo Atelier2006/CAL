@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約状況確認 - キャリアセンター</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <style>
+        body { padding-bottom: 80px; }
+        .instruction { padding:15px; font-size:.9rem; color:#555; }
+        .calendar-wrapper { padding:0 15px; overflow-x:auto; }
+        .calendar-table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 4px rgba(0,0,0,.05); }
+        .calendar-table th, .calendar-table td { border:1px solid #eee; padding:10px 2px; text-align:center; font-size:.75rem; }
+        .calendar-table th { background:#f8f9fa; color:#4ea9df; }
+        .slot-available a { display:block; color:#4ea9df; font-weight:bold; text-decoration:none; padding:4px; }
+        .slot-available:hover { background:#e6f4fc; }
+        .slot-booked { background:#f0f0f0; color:#999; }
+        .flash { background:#fff3bf; color:#8a6d00; padding:10px 14px; border-radius:8px; margin:0 15px 12px; font-size:.85rem; }
+        .legend { padding:10px 15px; font-size:.72rem; color:#777; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>予約状況確認</h1>
+        <a href="{{ url_for('user_mypage') }}" style="color:white;"><span class="material-icons">account_circle</span></a>
+    </header>
+
+    {% with msgs = get_flashed_messages() %}{% if msgs %}
+      {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+    {% endif %}{% endwith %}
+
+    <div class="instruction">予約したい時間帯の「〇」をタップしてください。（営業日3日前まで受付／同日は1件まで）</div>
+
+    <div class="calendar-wrapper">
+        <table class="calendar-table">
+            <thead>
+                <tr><th>日付</th>{% for s in slots %}<th>{{ s }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <th>{{ row.label }}<br>({{ row.wd }})</th>
+                    {% for cell in row.cells %}
+                        {% if cell.available %}
+                        <td class="slot-available">
+                            <a href="{{ url_for('user_reserve_form', date=cell.date, slot=cell.slot) }}">〇</a>
+                        </td>
+                        {% else %}
+                        <td class="slot-booked">×</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="legend">〇=予約可 ／ ×=予約不可（満枠・受付期間外・同日予約済み）</p>
+
+    <nav class="bottom-nav">
+        <a href="{{ url_for('user_home') }}" class="nav-item"><span class="material-icons">home</span><span>ホーム</span></a>
+        <a href="{{ url_for('user_info') }}" class="nav-item"><span class="material-icons">mail</span><span>お知らせ</span></a>
+        <a href="{{ url_for('user_check') }}" class="nav-item active"><span class="material-icons">assignment</span><span>予約管理</span></a>
+    </nav>
+</body>
+</html>
